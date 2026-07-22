@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../auth/data/auth_providers.dart';
+import '../../matches/presentation/matches_list_page.dart';
 
 /// Contenedor principal tras iniciar sesión. Bottom navigation con las tres
 /// zonas del MVP. Las pantallas internas se implementan en iteraciones
@@ -18,6 +21,12 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   static const _titles = ['Partidos', 'Mis participaciones', 'Perfil'];
 
+  void _notImplemented(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Pantalla en construcción.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,10 +40,13 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-      body: _PlaceholderTab(title: _titles[_index]),
+      body: switch (_index) {
+        0 => MatchesListPage(onOpenMatch: (match) => _notImplemented(context)),
+        _ => _PlaceholderTab(title: _titles[_index]),
+      },
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(
-              onPressed: () {},
+              onPressed: () => context.push(AppRoutes.createMatch),
               icon: const Icon(Icons.add),
               label: const Text('Crear partido'),
             )

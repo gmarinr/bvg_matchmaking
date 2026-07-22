@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Identidad visual de Match Making: estilo deportivo enérgico.
-/// Primario rosa, acento azul de acción, soporte claro/oscuro.
+/// Identidad visual de Match Making: paleta "cancha".
+///
+/// Verde pasto como color base, acompañado de blanco levemente azulado y un
+/// acento ámbar de alto contraste (par complementario verde/ámbar) para los
+/// llamados a la acción. Soporta claro y oscuro.
 ///
 /// Tipografía prevista: Barlow Condensed (títulos) / Barlow (cuerpo). Se
 /// incorpora vía `google_fonts` cuando se apruebe la dependencia; por ahora
@@ -9,46 +12,81 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
-  static const Color _primary = Color(0xFFE11D48); // rose 600
-  static const Color _secondary = Color(0xFFFB7185); // rose 400
-  static const Color _accent = Color(0xFF2563EB); // blue 600 (CTA)
-  static const Color _error = Color(0xFFDC2626); // red 600
+  // --- Verdes de pasto ---
+  static const Color _grass = Color(0xFF15803D); // green 700 (primario)
+  static const Color _grassLight = Color(0xFF22C55E); // green 500 (secundario)
+  static const Color _grassBright = Color(0xFF4ADE80); // green 400 (dark mode)
+  static const Color _grassDeep = Color(0xFF052E16); // green 950 (texto/on)
+
+  // --- Acento ámbar de alto contraste ---
+  static const Color _amber = Color(0xFFF59E0B); // amber 500
+  static const Color _amberSoft = Color(0xFFFBBF24); // amber 400 (dark mode)
+  static const Color _amberInk = Color(0xFF422006); // texto sobre ámbar
+
+  // --- Neutros ---
+  static const Color _error = Color(0xFFDC2626);
+  static const Color _bluishWhite = Color(0xFFF4F8FB); // fondo claro azulado
+  static const Color _ink = Color(0xFF0F172A); // texto sobre claro
+  static const Color _darkSurface = Color(0xFF0B141B); // superficie oscura
 
   static ThemeData get light => _build(Brightness.light);
   static ThemeData get dark => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
-    final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: _primary,
+    final bool isLight = brightness == Brightness.light;
+
+    final ColorScheme base = ColorScheme.fromSeed(
+      seedColor: _grass,
       brightness: brightness,
-    ).copyWith(
-      primary: _primary,
-      secondary: _secondary,
-      tertiary: _accent,
-      error: _error,
     );
 
-    final double radius = 14;
+    final ColorScheme scheme = isLight
+        ? base.copyWith(
+            primary: _grass,
+            onPrimary: Colors.white,
+            secondary: _grassLight,
+            onSecondary: _grassDeep,
+            tertiary: _amber,
+            onTertiary: _amberInk,
+            error: _error,
+            onError: Colors.white,
+            surface: Colors.white,
+            onSurface: _ink,
+          )
+        : base.copyWith(
+            primary: _grassBright,
+            onPrimary: _grassDeep,
+            secondary: _grassLight,
+            onSecondary: _grassDeep,
+            tertiary: _amberSoft,
+            onTertiary: _amberInk,
+            error: _error,
+            onError: Colors.white,
+            surface: _darkSurface,
+          );
+
+    final Color scaffoldBg = isLight ? _bluishWhite : const Color(0xFF060D12);
+    const double radius = 14;
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surface,
+      scaffoldBackgroundColor: scaffoldBg,
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
-        backgroundColor: scheme.surface,
+        backgroundColor: scaffoldBg,
         foregroundColor: scheme.onSurface,
         titleTextStyle: TextStyle(
           color: scheme.onSurface,
           fontSize: 22,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: 0.2,
         ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: scheme.surfaceContainerLow,
+        color: scheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
           side: BorderSide(color: scheme.outlineVariant),
@@ -76,9 +114,13 @@ class AppTheme {
           ),
         ),
       ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.tertiary,
+        foregroundColor: scheme.onTertiary,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerHighest,
+        fillColor: isLight ? Colors.white : scheme.surfaceContainerHighest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radius),
           borderSide: BorderSide.none,
@@ -98,6 +140,10 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primary.withValues(alpha: 0.16),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,

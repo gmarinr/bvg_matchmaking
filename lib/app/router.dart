@@ -8,6 +8,7 @@ import '../features/auth/data/auth_providers.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/register_page.dart';
 import '../features/home/presentation/home_page.dart';
+import '../features/matches/presentation/create_match_page.dart';
 
 /// Rutas nombradas de la app.
 class AppRoutes {
@@ -16,6 +17,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
+  static const String createMatch = '/matches/new';
 }
 
 /// Router con guard de autenticación. Sin sesión, todo redirige a login;
@@ -48,6 +50,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.createMatch,
+        builder: (context, state) => const CreateMatchPage(),
       ),
     ],
   );
