@@ -86,12 +86,14 @@ void main() {
             .getMyOrganizedMatches('fake-user-1'),
       );
 
-      expect(mine, hasLength(1));
-      expect(mine!.first.title, 'Fútbol de prueba');
-      expect(mine.first.commune, 'Ñuñoa');
-      expect(mine.first.locationText, 'Estadio Nacional');
+      // Hay además un partido semilla del mismo organizador: se busca el creado.
+      final created =
+          mine!.where((m) => m.title == 'Fútbol de prueba').toList();
+      expect(created, hasLength(1));
+      expect(created.first.commune, 'Ñuñoa');
+      expect(created.first.locationText, 'Estadio Nacional');
       // El organizador cuenta como participante.
-      expect(mine.first.acceptedCount, 1);
+      expect(created.first.acceptedCount, 1);
     },
     timeout: const Timeout(Duration(seconds: 45)),
   );

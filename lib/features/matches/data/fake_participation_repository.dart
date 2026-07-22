@@ -1,23 +1,26 @@
 import '../../../core/domain/enums.dart';
 import '../domain/match_participation.dart';
 import '../domain/participation_repository.dart';
+import 'in_memory_match_store.dart';
 
-/// Implementación en memoria de solicitudes y asistencia.
+/// Implementación en memoria de solicitudes y asistencia. Cada cambio de
+/// estado repercute en los cupos y el estado del partido a través del store.
 class FakeParticipationRepository implements ParticipationRepository {
-  final List<MatchParticipation> _rows = [];
-  int _counter = 0;
+  FakeParticipationRepository(this._store);
+
+  final InMemoryMatchStore _store;
 
   @override
   Future<List<MatchParticipation>> getParticipantsForMatch(
       String matchId) async {
     await _tick();
-    return _rows.where((p) => p.matchId == matchId).toList();
+    return _store.participations.where((p) => p.matchId == matchId).toList();
   }
 
   @override
   Future<List<MatchParticipation>> getMyParticipations(String userId) async {
     await _tick();
-    return _rows.where((p) => p.userId == userId).toList();
+    return _store.participations.where((p) => p.userId == userId).toList();
   }
 
   @override
@@ -26,13 +29,14 @@ class FakeParticipationRepository implements ParticipationRepository {
     required String userId,
   }) async {
     await _tick();
-    final existing = _rows.any((p) => p.matchId == matchId && p.userId == userId);
-    if (existing) {
+    final exists = _store.participations
+        .any((p) => p.matchId == matchId && p.userId == userId);
+    if (exists) {
       throw StateError('Ya solicitaste participar en este partido.');
     }
     final now = DateTime.now();
     final row = MatchParticipation(
-      id: 'part-${++_counter}',
+      id: _store.nextId('part'),
       matchId: matchId,
       userId: userId,
       role: ParticipantRole.participant,
@@ -41,7 +45,7 @@ class FakeParticipationRepository implements ParticipationRepository {
       createdAt: now,
       updatedAt: now,
     );
-    _rows.add(row);
+    _store.participations.add(row);
     return row;
   }
 
@@ -51,11 +55,9 @@ class FakeParticipationRepository implements ParticipationRepository {
     required bool accept,
   }) async {
     await _tick();
-    final i = _rows.indexWhere((p) => p.id == participationId);
-    if (i == -1) return;
-    _rows[i] = _rows[i].copyWith(
-      participationStatus:
-          accept ? ParticipationStatus.accepted : ParticipationStatus.rejected,
+    _transition(
+      participationId,
+      accept ? ParticipationStatus.accepted : ParticipationStatus.rejected,
     );
   }
 
@@ -65,20 +67,36 @@ class FakeParticipationRepository implements ParticipationRepository {
     required AttendanceStatus status,
   }) async {
     await _tick();
-    final i = _rows.indexWhere((p) => p.id == participationId);
+    final i = _indexOf(participationId);
     if (i == -1) return;
-    _rows[i] = _rows[i].copyWith(attendanceStatus: status);
+    _store.participations[i] =
+        _store.participations[i].copyWith(attendanceStatus: status);
   }
 
   @override
   Future<void> cancelParticipation(String participationId) async {
     await _tick();
-    final i = _rows.indexWhere((p) => p.id == participationId);
+    _transition(participationId, ParticipationStatus.cancelled);
+  }
+
+  /// Cambia el estado de la participación y actualiza cupos/estado del partido.
+  void _transition(String participationId, ParticipationStatus to) {
+    final i = _indexOf(participationId);
     if (i == -1) return;
-    _rows[i] = _rows[i].copyWith(
-      participationStatus: ParticipationStatus.cancelled,
+    final row = _store.participations[i];
+    final from = row.participationStatus;
+    if (from == to) return;
+
+    _store.participations[i] = row.copyWith(participationStatus: to);
+    _store.applyParticipationChange(
+      matchId: row.matchId,
+      from: from,
+      to: to,
     );
   }
+
+  int _indexOf(String participationId) =>
+      _store.participations.indexWhere((p) => p.id == participationId);
 
   Future<void> _tick() =>
       Future<void>.delayed(const Duration(milliseconds: 300));

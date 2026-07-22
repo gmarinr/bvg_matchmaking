@@ -21,12 +21,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   static const _titles = ['Partidos', 'Mis participaciones', 'Perfil'];
 
-  void _notImplemented(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pantalla en construcción.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +35,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         ],
       ),
       body: switch (_index) {
-        0 => MatchesListPage(onOpenMatch: (match) => _notImplemented(context)),
+        0 => MatchesListPage(
+            onOpenMatch: (match) =>
+                context.push(AppRoutes.matchDetailPath(match.id)),
+          ),
         _ => _PlaceholderTab(title: _titles[_index]),
       },
       floatingActionButton: _index == 0

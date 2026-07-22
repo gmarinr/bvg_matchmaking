@@ -4,6 +4,7 @@ import '../../../../core/domain/enums.dart';
 import '../../../../core/utils/app_date.dart';
 import '../../../../core/utils/labels.dart';
 import '../../domain/match.dart';
+import 'sport_pill.dart';
 
 /// Tarjeta que resume un partido en la lista de búsqueda.
 class MatchCard extends StatelessWidget {
@@ -35,11 +36,9 @@ class MatchCard extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
-                    child: _Pill(
-                      label: sportName,
-                      color: scheme.primary,
-                      onColor: scheme.onPrimary,
-                      icon: Icons.sports_soccer,
+                    child: SportPill(
+                      matchId: match.id,
+                      sportName: sportName,
                     ),
                   ),
                   const SizedBox(width: 8),
