@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/env.dart';
+import '../../../core/supabase/supabase_providers.dart';
 import '../domain/auth_repository.dart';
 import 'fake_auth_repository.dart';
+import 'supabase_auth_repository.dart';
 
 /// Punto único de inyección del repositorio de auth.
 ///
@@ -9,6 +12,9 @@ import 'fake_auth_repository.dart';
 /// `SupabaseAuthRepository(ref.watch(supabaseClientProvider))`. Ningún widget
 /// cambia: todos dependen de la interfaz `AuthRepository`.
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  if (Env.isSupabaseConfigured) {
+    return SupabaseAuthRepository(ref.watch(supabaseClientProvider));
+  }
   return FakeAuthRepository();
 });
 
