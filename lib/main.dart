@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
-  runApp(const MainApp());
-}
+import 'app/app.dart';
+import 'core/config/env.dart';
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+  // Solo inicializa Supabase si hay credenciales. Sin ellas, la app corre
+  // contra los repositorios en memoria (desarrollo de UI sin backend).
+  if (Env.isSupabaseConfigured) {
+    await Supabase.initialize(
+      url: Env.supabaseUrl,
+      // La anon key pública se pasa como publishableKey (naming nuevo del SDK).
+      publishableKey: Env.supabaseAnonKey,
     );
   }
+
+  runApp(const ProviderScope(child: MatchMakingApp()));
 }
