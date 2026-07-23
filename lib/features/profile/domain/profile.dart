@@ -24,34 +24,33 @@ class Profile {
     String? avatarUrl,
     String? generalAvailability,
     DateTime? updatedAt,
-  }) =>
-      Profile(
-        id: id,
-        displayName: displayName ?? this.displayName,
-        commune: commune ?? this.commune,
-        createdAt: createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        avatarUrl: avatarUrl ?? this.avatarUrl,
-        generalAvailability: generalAvailability ?? this.generalAvailability,
-      );
+  }) => Profile(
+    id: id,
+    displayName: displayName ?? this.displayName,
+    commune: commune ?? this.commune,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    avatarUrl: avatarUrl ?? this.avatarUrl,
+    generalAvailability: generalAvailability ?? this.generalAvailability,
+  );
 
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
-        id: json['id'] as String,
-        displayName: json['display_name'] as String,
-        commune: json['commune'] as String,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
-        avatarUrl: json['avatar_url'] as String?,
-        generalAvailability: json['general_availability'] as String?,
-      );
+    id: json['id'] as String,
+    displayName: json['display_name'] as String,
+    commune: json['commune'] as String,
+    createdAt: DateTime.parse(json['created_at'] as String),
+    updatedAt: DateTime.parse(json['updated_at'] as String),
+    avatarUrl: json['avatar_url'] as String?,
+    generalAvailability: json['general_availability'] as String?,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'display_name': displayName,
-        'commune': commune,
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-        'avatar_url': avatarUrl,
-        'general_availability': generalAvailability,
-      };
+    'id': id,
+    'display_name': displayName,
+    'commune': commune,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+    'avatar_url': avatarUrl,
+    'general_availability': generalAvailability,
+  };
 }

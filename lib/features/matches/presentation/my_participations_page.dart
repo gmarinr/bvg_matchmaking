@@ -6,7 +6,7 @@ import '../../../core/domain/enums.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match_participation.dart';
-import 'manage_match_page.dart';
+import 'manage_requests_page.dart';
 
 class MyParticipationsPage extends ConsumerWidget {
   const MyParticipationsPage({super.key});
@@ -126,7 +126,7 @@ class _ParticipationCardState extends ConsumerState<ParticipationCard> {
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) =>
-                        ManageMatchPage(matchId: participation.matchId),
+                        ManageRequestsPage(matchId: participation.matchId),
                   ),
                 ),
                 icon: const Icon(Icons.manage_accounts_outlined),

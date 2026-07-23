@@ -16,11 +16,17 @@ void main() {
     await tester.pumpAndSettle(const Duration(milliseconds: 400));
 
     expect(find.text('Fútbol 7 en La Reina'), findsOneWidget);
-    expect(find.text('Solicitar participación'), findsWidgets);
+    await tester.tap(find.text('Fútbol 7 en La Reina'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 500));
+
+    expect(find.text('Solicitar participación'), findsOneWidget);
 
     await tester.tap(find.text('Solicitar participación').first);
     await tester.pumpAndSettle(const Duration(milliseconds: 400));
 
-    expect(find.text('Solicitud enviada.'), findsOneWidget);
+    expect(
+      find.text('Solicitud enviada. Espera la respuesta del organizador.'),
+      findsOneWidget,
+    );
   });
 }

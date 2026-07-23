@@ -10,16 +10,16 @@ class Sport {
   final bool isActive;
 
   factory Sport.fromJson(Map<String, dynamic> json) => Sport(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        isActive: json['is_active'] as bool? ?? true,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    isActive: json['is_active'] as bool? ?? true,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'is_active': isActive,
-      };
+    'id': id,
+    'name': name,
+    'is_active': isActive,
+  };
 }
 
 /// Relación usuario–deporte–nivel (`user_sports`).
@@ -35,14 +35,14 @@ class UserSport {
   final SkillLevel skillLevel;
 
   factory UserSport.fromJson(Map<String, dynamic> json) => UserSport(
-        userId: json['user_id'] as String,
-        sportId: json['sport_id'] as String,
-        skillLevel: SkillLevel.fromWire(json['skill_level'] as String),
-      );
+    userId: json['user_id'] as String,
+    sportId: json['sport_id'] as String,
+    skillLevel: SkillLevel.fromWire(json['skill_level'] as String),
+  );
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'sport_id': sportId,
-        'skill_level': skillLevel.wire,
-      };
+    'user_id': userId,
+    'sport_id': sportId,
+    'skill_level': skillLevel.wire,
+  };
 }

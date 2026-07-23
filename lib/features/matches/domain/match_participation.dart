@@ -31,17 +31,16 @@ class MatchParticipation {
     ParticipationStatus? participationStatus,
     AttendanceStatus? attendanceStatus,
     DateTime? updatedAt,
-  }) =>
-      MatchParticipation(
-        id: id,
-        matchId: matchId,
-        userId: userId,
-        role: role,
-        participationStatus: participationStatus ?? this.participationStatus,
-        attendanceStatus: attendanceStatus ?? this.attendanceStatus,
-        createdAt: createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-      );
+  }) => MatchParticipation(
+    id: id,
+    matchId: matchId,
+    userId: userId,
+    role: role,
+    participationStatus: participationStatus ?? this.participationStatus,
+    attendanceStatus: attendanceStatus ?? this.attendanceStatus,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 
   factory MatchParticipation.fromJson(Map<String, dynamic> json) =>
       MatchParticipation(
@@ -49,22 +48,24 @@ class MatchParticipation {
         matchId: json['match_id'] as String,
         userId: json['user_id'] as String,
         role: ParticipantRole.fromWire(json['role'] as String),
-        participationStatus:
-            ParticipationStatus.fromWire(json['participation_status'] as String),
-        attendanceStatus:
-            AttendanceStatus.fromWire(json['attendance_status'] as String),
+        participationStatus: ParticipationStatus.fromWire(
+          json['participation_status'] as String,
+        ),
+        attendanceStatus: AttendanceStatus.fromWire(
+          json['attendance_status'] as String,
+        ),
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'match_id': matchId,
-        'user_id': userId,
-        'role': role.wire,
-        'participation_status': participationStatus.wire,
-        'attendance_status': attendanceStatus.wire,
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'match_id': matchId,
+    'user_id': userId,
+    'role': role.wire,
+    'participation_status': participationStatus.wire,
+    'attendance_status': attendanceStatus.wire,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+  };
 }

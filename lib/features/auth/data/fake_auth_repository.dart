@@ -16,20 +16,14 @@ class FakeAuthRepository implements AuthRepository {
   Stream<AppUser?> authStateChanges() => _controller.stream;
 
   @override
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     _current = AppUser(id: 'fake-user-1', email: email);
     _controller.add(_current);
   }
 
   @override
-  Future<void> signUp({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signUp({required String email, required String password}) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     _current = AppUser(id: 'fake-user-1', email: email);
     _controller.add(_current);

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../auth/data/auth_providers.dart';
-import '../../matches/data/matches_providers.dart';
-import '../../matches/presentation/create_match_page.dart';
-import '../../matches/presentation/matches_page.dart';
+import '../../matches/presentation/matches_list_page.dart';
 import '../../matches/presentation/my_participations_page.dart';
 import '../../profile/presentation/profile_page.dart';
 
@@ -34,22 +34,17 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _index,
-        children: [
-          const MatchesPage(),
-          const MyParticipationsPage(),
-          const ProfilePage(),
-        ],
-      ),
+      body: switch (_index) {
+        0 => MatchesListPage(
+          onOpenMatch: (match) =>
+              context.push(AppRoutes.matchDetailPath(match.id)),
+        ),
+        1 => const MyParticipationsPage(),
+        _ => const ProfilePage(),
+      },
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CreateMatchPage()),
-                );
-                if (mounted) ref.invalidate(matchesProvider);
-              },
+              onPressed: () => context.push(AppRoutes.createMatch),
               icon: const Icon(Icons.add),
               label: const Text('Crear partido'),
             )
