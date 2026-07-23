@@ -12,6 +12,7 @@ import '../domain/match.dart';
 import '../domain/match_participation.dart';
 import 'providers/match_detail_providers.dart';
 import 'providers/matches_list_providers.dart';
+import 'providers/my_matches_providers.dart';
 import 'widgets/sport_pill.dart';
 
 /// Detalle de un partido. Muestra los mismos campos que el formulario de
@@ -24,9 +25,18 @@ class MatchDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final matchAsync = ref.watch(matchDetailProvider(matchId));
+    final user = ref.watch(authRepositoryProvider).currentUser;
+    final match = matchAsync.valueOrNull;
+    final isOrganizer = match != null && user != null &&
+        match.organizerId == user.id;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle del partido')),
+      appBar: AppBar(
+        title: const Text('Detalle del partido'),
+        actions: [
+          if (isOrganizer) _OrganizerMenu(match: match),
+        ],
+      ),
       body: matchAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => _CenteredMessage(
@@ -53,6 +63,93 @@ class MatchDetailPage extends ConsumerWidget {
             match == null ? null : _ActionBar(match: match),
         orElse: () => null,
       ),
+    );
+  }
+}
+
+/// Acciones secundarias del organizador: editar y cancelar el encuentro.
+class _OrganizerMenu extends ConsumerWidget {
+  const _OrganizerMenu({required this.match});
+
+  final Match match;
+
+  bool get _isClosed =>
+      match.status == MatchStatus.completed ||
+      match.status == MatchStatus.cancelled;
+
+  Future<void> _confirmCancel(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cancelar el partido?'),
+        content: const Text(
+          'Se avisará a los participantes y el partido dejará de aparecer '
+          'en la búsqueda. Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Cancelar partido'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref
+          .read(matchRepositoryProvider)
+          .updateStatus(match.id, MatchStatus.cancelled);
+      ref.invalidate(matchDetailProvider(match.id));
+      ref.invalidate(matchesListProvider);
+      ref.invalidate(myMatchesProvider);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Partido cancelado.')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No pudimos cancelar el partido.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (_isClosed) return const SizedBox.shrink();
+
+    return PopupMenuButton<String>(
+      tooltip: 'Opciones del organizador',
+      onSelected: (value) {
+        if (value == 'edit') {
+          context.push(AppRoutes.editMatchPath(match.id));
+        } else {
+          _confirmCancel(context, ref);
+        }
+      },
+      itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: 'edit',
+          child: ListTile(
+            leading: Icon(Icons.edit_outlined),
+            title: Text('Editar partido'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        PopupMenuItem(
+          value: 'cancel',
+          child: ListTile(
+            leading: Icon(Icons.cancel_outlined),
+            title: Text('Cancelar partido'),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -307,6 +404,7 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
     ref.invalidate(myParticipationProvider(_match.id));
     ref.invalidate(matchDetailProvider(_match.id));
     ref.invalidate(matchesListProvider);
+    ref.invalidate(myMatchesProvider);
   }
 
   void _toast(String message) {
@@ -377,24 +475,89 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
     );
   }
 
+  /// Cambia el estado del ciclo de vida del partido (Flujo C).
+  Future<void> _setStatus(MatchStatus status, String okMessage) => _run(
+        () => ref
+            .read(matchRepositoryProvider)
+            .updateStatus(_match.id, status),
+        okMessage,
+      );
+
   Widget _organizerActions() {
+    // El partido solo se confirma cuando hay gente suficiente.
+    final enoughPlayers = _match.acceptedCount >= _match.minParticipants;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         _Note(
           icon: Icons.shield_outlined,
-          text: 'Eres el organizador de este partido.',
+          text: _organizerNote(enoughPlayers),
         ),
         const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: () =>
-              context.push(AppRoutes.manageRequestsPath(_match.id)),
-          icon: const Icon(Icons.inbox_outlined),
-          label: const Text('Gestionar solicitudes'),
-        ),
+        if (_match.status != MatchStatus.completed &&
+            _match.status != MatchStatus.cancelled)
+          OutlinedButton.icon(
+            onPressed: () =>
+                context.push(AppRoutes.manageRequestsPath(_match.id)),
+            icon: const Icon(Icons.inbox_outlined),
+            label: const Text('Gestionar solicitudes'),
+          ),
+        ...switch (_match.status) {
+          MatchStatus.open || MatchStatus.full => [
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: _busy || !enoughPlayers
+                    ? null
+                    : () => _setStatus(
+                          MatchStatus.confirmed,
+                          'Partido confirmado.',
+                        ),
+                icon: const Icon(Icons.verified_outlined),
+                label: const Text('Confirmar partido'),
+              ),
+            ],
+          MatchStatus.confirmed => [
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => _setStatus(
+                          MatchStatus.completed,
+                          'Partido marcado como finalizado.',
+                        ),
+                icon: const Icon(Icons.flag_outlined),
+                label: const Text('Marcar como finalizado'),
+              ),
+            ],
+          MatchStatus.draft => [
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () =>
+                        _setStatus(MatchStatus.open, 'Partido publicado.'),
+                icon: const Icon(Icons.campaign_outlined),
+                label: const Text('Publicar partido'),
+              ),
+            ],
+          MatchStatus.completed || MatchStatus.cancelled => const <Widget>[],
+        },
       ],
     );
   }
+
+  String _organizerNote(bool enoughPlayers) => switch (_match.status) {
+        MatchStatus.cancelled => 'Cancelaste este partido.',
+        MatchStatus.completed => 'Este partido ya está finalizado.',
+        MatchStatus.confirmed =>
+          'Partido confirmado. Márcalo como finalizado cuando ocurra.',
+        MatchStatus.draft => 'Este partido aún no se publica.',
+        _ when !enoughPlayers =>
+          'Necesitas ${_match.minParticipants - _match.acceptedCount} '
+              'participante(s) más para poder confirmar.',
+        _ => 'Ya tienes el mínimo de participantes: puedes confirmar.',
+      };
 
   Widget _participantActions(
     String userId,

@@ -1,5 +1,7 @@
+import 'package:bvg_matchmaking/core/domain/enums.dart';
 import 'package:bvg_matchmaking/features/auth/data/auth_providers.dart';
 import 'package:bvg_matchmaking/features/auth/domain/auth_repository.dart';
+import 'package:bvg_matchmaking/features/matches/data/matches_providers.dart';
 import 'package:bvg_matchmaking/features/matches/presentation/match_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,29 +34,38 @@ class _SignedInAuthRepository implements AuthRepository {
 /// progreso animan indefinidamente y nunca se estabilizan).
 Future<void> _settle(WidgetTester tester) async {
   await tester.pump();
-  await tester.pump(const Duration(milliseconds: 500));
-  await tester.pump(const Duration(milliseconds: 500));
+  for (var i = 0; i < 3; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+  }
 }
 
-Future<void> _pumpDetail(
+Future<ProviderContainer> _pumpDetail(
   WidgetTester tester, {
   required String userId,
   String matchId = 'm1',
+  ProviderContainer? container,
 }) async {
   tester.view.physicalSize = const Size(1200, 2600);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
+  final scope = container ??
+      ProviderContainer(
+        overrides: [
+          authRepositoryProvider
+              .overrideWithValue(_SignedInAuthRepository(userId)),
+        ],
+      );
+  if (container == null) addTearDown(scope.dispose);
+
   await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        authRepositoryProvider
-            .overrideWithValue(_SignedInAuthRepository(userId)),
-      ],
+    UncontrolledProviderScope(
+      container: scope,
       child: MaterialApp(home: MatchDetailPage(matchId: matchId)),
     ),
   );
   await _settle(tester);
+  return scope;
 }
 
 void main() {
@@ -88,10 +99,66 @@ void main() {
   });
 
   testWidgets('el organizador no ve la acción de solicitar', (tester) async {
-    // Los partidos semilla tienen organizerId = 'other-user'.
+    // Los partidos semilla m1–m3 tienen organizerId = 'other-user'.
     await _pumpDetail(tester, userId: 'other-user');
 
-    expect(find.text('Eres el organizador de este partido.'), findsOneWidget);
+    expect(find.text('Gestionar solicitudes'), findsOneWidget);
     expect(find.text('Solicitar participación'), findsNothing);
+  });
+
+  testWidgets('sin el mínimo de participantes no se puede confirmar',
+      (tester) async {
+    // m1 tiene 9 aceptados y exige 10.
+    await _pumpDetail(tester, userId: 'other-user');
+
+    expect(
+      find.text('Necesitas 1 participante(s) más para poder confirmar.'),
+      findsOneWidget,
+    );
+    final button = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Confirmar partido'),
+    );
+    expect(button.onPressed, isNull);
+  });
+
+  testWidgets('con el mínimo alcanzado el organizador confirma el partido',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider
+            .overrideWithValue(_SignedInAuthRepository('fake-user-1')),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    // m4 (organizado por fake-user-1) exige 4 y parte con 2 aceptados:
+    // aceptar las dos solicitudes pendientes alcanza el mínimo.
+    await tester.runAsync(() async {
+      final repo = container.read(participationRepositoryProvider);
+      await repo.respondToRequest(participationId: 'p3', accept: true);
+      await repo.respondToRequest(participationId: 'p4', accept: true);
+    });
+
+    await _pumpDetail(
+      tester,
+      userId: 'fake-user-1',
+      matchId: 'm4',
+      container: container,
+    );
+
+    expect(
+      find.text('Ya tienes el mínimo de participantes: puedes confirmar.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Confirmar partido'));
+    await _settle(tester);
+
+    final match = await tester.runAsync(
+      () => container.read(matchRepositoryProvider).getMatch('m4'),
+    );
+    expect(match!.status, MatchStatus.confirmed);
+    // Confirmado, la siguiente acción disponible es finalizarlo.
+    expect(find.text('Marcar como finalizado'), findsOneWidget);
   });
 }

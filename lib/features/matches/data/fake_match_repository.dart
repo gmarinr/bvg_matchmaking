@@ -1,5 +1,6 @@
 import '../../../core/domain/enums.dart';
 import '../domain/match.dart';
+import '../domain/match_participation.dart';
 import '../domain/match_repository.dart';
 import 'in_memory_match_store.dart';
 
@@ -62,6 +63,21 @@ class FakeMatchRepository implements MatchRepository {
       acceptedCount: 1, // el organizador cuenta como participante
     );
     _store.matches.add(created);
+
+    // El organizador queda registrado como participante aceptado del partido,
+    // que es lo que justifica el cupo ocupado de arriba.
+    _store.participations.add(
+      MatchParticipation(
+        id: _store.nextId('part'),
+        matchId: created.id,
+        userId: created.organizerId,
+        role: ParticipantRole.organizer,
+        participationStatus: ParticipationStatus.accepted,
+        attendanceStatus: AttendanceStatus.confirmed,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
     return created;
   }
 

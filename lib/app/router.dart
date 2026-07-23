@@ -9,6 +9,7 @@ import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/register_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/matches/presentation/create_match_page.dart';
+import '../features/matches/presentation/edit_match_page.dart';
 import '../features/matches/presentation/manage_requests_page.dart';
 import '../features/matches/presentation/match_detail_page.dart';
 
@@ -31,6 +32,11 @@ class AppRoutes {
   static const String manageRequests = '/matches/:id/requests';
 
   static String manageRequestsPath(String id) => '/matches/$id/requests';
+
+  /// Edición del partido (solo organizador).
+  static const String editMatch = '/matches/:id/edit';
+
+  static String editMatchPath(String id) => '/matches/$id/edit';
 }
 
 /// Router con guard de autenticación. Sin sesión, todo redirige a login;
@@ -77,6 +83,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.manageRequests,
         builder: (context, state) => ManageRequestsPage(
+          matchId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.editMatch,
+        builder: (context, state) => EditMatchPage(
           matchId: state.pathParameters['id']!,
         ),
       ),

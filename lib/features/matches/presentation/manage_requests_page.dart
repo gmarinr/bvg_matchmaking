@@ -10,6 +10,7 @@ import '../domain/match_participation.dart';
 import 'providers/manage_requests_providers.dart';
 import 'providers/match_detail_providers.dart';
 import 'providers/matches_list_providers.dart';
+import 'providers/my_matches_providers.dart';
 
 /// Gestión de solicitudes de un partido. Solo el organizador puede aceptar o
 /// rechazar; el resto ve un aviso de acceso no autorizado.
@@ -220,6 +221,7 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
       ref.invalidate(matchParticipantsProvider(widget.match.id));
       ref.invalidate(matchDetailProvider(widget.match.id));
       ref.invalidate(matchesListProvider);
+      ref.invalidate(myMatchesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

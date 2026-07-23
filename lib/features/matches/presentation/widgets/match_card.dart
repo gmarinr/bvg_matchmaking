@@ -13,11 +13,15 @@ class MatchCard extends StatelessWidget {
     required this.match,
     required this.sportName,
     this.onTap,
+    this.footer,
   });
 
   final Match match;
   final String sportName;
   final VoidCallback? onTap;
+
+  /// Contenido extra al pie de la tarjeta, p. ej. el estado de mi solicitud.
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +82,12 @@ class MatchCard extends StatelessWidget {
                   _Slots(match: match),
                 ],
               ),
+              if (footer != null) ...[
+                const SizedBox(height: 14),
+                Divider(height: 1, color: scheme.outlineVariant),
+                const SizedBox(height: 12),
+                footer!,
+              ],
             ],
           ),
         ),

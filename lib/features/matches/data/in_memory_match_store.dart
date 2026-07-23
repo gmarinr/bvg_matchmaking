@@ -132,7 +132,9 @@ class InMemoryMatchStore {
         commune: 'Maipú',
         locationText: 'Gimnasio Municipal',
         skillLevel: SkillLevel.beginner,
-        minParticipants: 6,
+        // Mínimo alcanzable aceptando las dos solicitudes pendientes: así se
+        // puede recorrer el flujo completo hasta confirmar el partido.
+        minParticipants: 4,
         maxParticipants: 12,
         status: MatchStatus.open,
         recruitmentMode: RecruitmentMode.players,

@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/enums.dart';
-import '../../../core/utils/app_date.dart';
 import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match.dart';
 import 'providers/matches_list_providers.dart';
+import 'providers/my_matches_providers.dart';
+import 'widgets/match_form_fields.dart';
 
 /// Formulario para crear y publicar un partido (Flujo A).
 /// Los campos coinciden con los que muestra el detalle del partido.
@@ -45,36 +46,20 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
   }
 
   Future<void> _pickDateTime() async {
-    final now = DateTime.now();
-    final base = _startAt ?? now.add(const Duration(days: 1));
-
-    final date = await showDatePicker(
-      context: context,
-      initialDate: base,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-      helpText: 'Fecha del partido',
-    );
-    if (date == null || !mounted) return;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(base),
-      helpText: 'Hora del partido',
-    );
-    if (time == null || !mounted) return;
-
+    final picked = await DateTimeTile.pick(context, current: _startAt);
+    if (picked == null || !mounted) return;
     setState(() {
       _dateTouched = true;
-      _startAt =
-          DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _startAt = picked;
     });
   }
 
   void _setMax(int value) {
     setState(() {
       _maxParticipants = value;
-      if (_minParticipants > _maxParticipants) _minParticipants = _maxParticipants;
+      if (_minParticipants > _maxParticipants) {
+        _minParticipants = _maxParticipants;
+      }
     });
   }
 
@@ -113,6 +98,7 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
     try {
       await ref.read(matchRepositoryProvider).createMatch(match);
       ref.invalidate(matchesListProvider);
+      ref.invalidate(myMatchesProvider);
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +127,7 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             children: [
-              _Label('Deporte'),
+              const FieldLabel('Deporte'),
               const SizedBox(height: 8),
               sportsAsync.when(
                 loading: () => const LinearProgressIndicator(),
@@ -166,10 +152,10 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
                 ),
               ),
               if (_sportTouched && _sportId == null)
-                _FieldError('Elige un deporte'),
+                const FieldError('Elige un deporte'),
               const SizedBox(height: 20),
 
-              _Label('Título'),
+              const FieldLabel('Título'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _title,
@@ -178,13 +164,12 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
                   hintText: 'Ej: Fútbol 7 después del trabajo',
                 ),
                 maxLength: 80,
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Ponle un título'
-                    : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Ponle un título' : null,
               ),
               const SizedBox(height: 8),
 
-              _Label('Descripción (opcional)'),
+              const FieldLabel('Descripción (opcional)'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _description,
@@ -197,18 +182,18 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
               ),
               const SizedBox(height: 20),
 
-              _Label('Fecha y hora'),
+              const FieldLabel('Fecha y hora'),
               const SizedBox(height: 8),
-              _DateTimeTile(
+              DateTimeTile(
                 value: _startAt,
                 hasError: _dateTouched && _startAt == null,
                 onTap: _pickDateTime,
               ),
               if (_dateTouched && _startAt == null)
-                _FieldError('Elige fecha y hora'),
+                const FieldError('Elige fecha y hora'),
               const SizedBox(height: 20),
 
-              _Label('Comuna'),
+              const FieldLabel('Comuna'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _commune,
@@ -217,13 +202,12 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
                   hintText: 'Ej: Ñuñoa',
                   prefixIcon: Icon(Icons.map_outlined),
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Indica la comuna'
-                    : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Indica la comuna' : null,
               ),
               const SizedBox(height: 16),
 
-              _Label('Lugar'),
+              const FieldLabel('Lugar'),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _location,
@@ -232,13 +216,12 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
                   hintText: 'Ej: Cancha Parque Padre Hurtado',
                   prefixIcon: Icon(Icons.place_outlined),
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Indica el lugar'
-                    : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Indica el lugar' : null,
               ),
               const SizedBox(height: 20),
 
-              _Label('Nivel'),
+              const FieldLabel('Nivel'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -253,9 +236,9 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
               ),
               const SizedBox(height: 24),
 
-              _Label('Cupos'),
+              const FieldLabel('Cupos'),
               const SizedBox(height: 8),
-              _Counter(
+              CounterField(
                 title: 'Máximo de jugadores',
                 subtitle: 'Incluyéndote a ti',
                 value: _maxParticipants,
@@ -264,7 +247,7 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
                 onChanged: _setMax,
               ),
               const SizedBox(height: 12),
-              _Counter(
+              CounterField(
                 title: 'Mínimo para confirmar',
                 subtitle: 'Cuántos necesitas para jugar',
                 value: _minParticipants,
@@ -288,160 +271,6 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context)
-          .textTheme
-          .labelLarge
-          ?.copyWith(fontWeight: FontWeight.w700),
-    );
-  }
-}
-
-class _FieldError extends StatelessWidget {
-  const _FieldError(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6, left: 4),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.error,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
-class _DateTimeTile extends StatelessWidget {
-  const _DateTimeTile({
-    required this.value,
-    required this.hasError,
-    required this.onTap,
-  });
-
-  final DateTime? value;
-  final bool hasError;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final borderColor = hasError ? scheme.error : scheme.outlineVariant;
-    return Material(
-      color: scheme.surface,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            border: Border.all(color: borderColor),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.event_outlined, color: scheme.onSurfaceVariant),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  value == null
-                      ? 'Selecciona fecha y hora'
-                      : AppDate.medium(value!),
-                  style: TextStyle(
-                    color: value == null
-                        ? scheme.onSurfaceVariant
-                        : scheme.onSurface,
-                    fontWeight:
-                        value == null ? FontWeight.w400 : FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Counter extends StatelessWidget {
-  const _Counter({
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final String title;
-  final String subtitle;
-  final int value;
-  final int min;
-  final int max;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: scheme.outlineVariant),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: theme.textTheme.bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                Text(subtitle,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant)),
-              ],
-            ),
-          ),
-          IconButton.filledTonal(
-            onPressed: value > min ? () => onChanged(value - 1) : null,
-            icon: const Icon(Icons.remove),
-          ),
-          SizedBox(
-            width: 36,
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
-            ),
-          ),
-          IconButton.filledTonal(
-            onPressed: value < max ? () => onChanged(value + 1) : null,
-            icon: const Icon(Icons.add),
-          ),
-        ],
       ),
     );
   }

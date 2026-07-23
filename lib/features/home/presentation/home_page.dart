@@ -5,10 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../auth/data/auth_providers.dart';
 import '../../matches/presentation/matches_list_page.dart';
+import '../../matches/presentation/my_matches_page.dart';
+import '../../profile/presentation/profile_page.dart';
 
 /// Contenedor principal tras iniciar sesión. Bottom navigation con las tres
-/// zonas del MVP. Las pantallas internas se implementan en iteraciones
-/// siguientes; por ahora son placeholders para validar navegación y tema.
+/// zonas del MVP: buscar partidos, mis partidos y perfil.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -20,6 +21,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   int _index = 0;
 
   static const _titles = ['Partidos', 'Mis participaciones', 'Perfil'];
+
+  void _openMatch(String id) => context.push(AppRoutes.matchDetailPath(id));
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +39,12 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       body: switch (_index) {
         0 => MatchesListPage(
-            onOpenMatch: (match) =>
-                context.push(AppRoutes.matchDetailPath(match.id)),
+            onOpenMatch: (match) => _openMatch(match.id),
           ),
-        _ => _PlaceholderTab(title: _titles[_index]),
+        1 => MyMatchesPage(
+            onOpenMatch: (match) => _openMatch(match.id),
+          ),
+        _ => const ProfilePage(),
       },
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(
@@ -68,38 +73,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             label: 'Perfil',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.construction_outlined,
-                size: 56, color: theme.colorScheme.primary),
-            const SizedBox(height: 12),
-            Text(title, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(
-              'Pantalla en construcción.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
