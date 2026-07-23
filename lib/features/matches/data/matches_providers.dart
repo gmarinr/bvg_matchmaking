@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/supabase/supabase_providers.dart';
+import '../domain/match.dart';
+import '../domain/match_participation.dart';
 import '../domain/match_repository.dart';
 import '../domain/participation_repository.dart';
 import 'fake_match_repository.dart';
@@ -28,3 +30,22 @@ final participationRepositoryProvider = Provider<ParticipationRepository>((
   }
   return FakeParticipationRepository();
 });
+
+final matchesProvider = FutureProvider.autoDispose<List<Match>>(
+  (ref) =>
+      ref.watch(matchRepositoryProvider).searchMatches(const MatchFilter()),
+);
+
+final myParticipationsProvider = FutureProvider.autoDispose
+    .family<List<MatchParticipation>, String>(
+      (ref, userId) => ref
+          .watch(participationRepositoryProvider)
+          .getMyParticipations(userId),
+    );
+
+final matchParticipantsProvider = FutureProvider.autoDispose
+    .family<List<MatchParticipation>, String>(
+      (ref, matchId) => ref
+          .watch(participationRepositoryProvider)
+          .getParticipantsForMatch(matchId),
+    );

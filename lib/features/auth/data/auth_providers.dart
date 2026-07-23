@@ -18,6 +18,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return FakeAuthRepository();
 });
 
+final currentAppUserProvider = Provider<AppUser?>((ref) {
+  return ref.watch(authRepositoryProvider).currentUser;
+});
+
 /// Sesión actual como stream. La UI y el router escuchan este provider para
 /// redirigir según haya o no usuario autenticado.
 final authStateProvider = StreamProvider<AppUser?>((ref) {
