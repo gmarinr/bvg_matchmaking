@@ -7,6 +7,23 @@ Failure mapSupabaseError(Object error) {
   if (error is Failure) return error;
 
   if (error is AuthException) {
+    final message = error.message.toLowerCase();
+    if (error.code == 'email_not_confirmed' ||
+        message.contains('email not confirmed')) {
+      return const AuthFailure('Confirma tu correo antes de iniciar sesión.');
+    }
+    if (error.statusCode == '429' || message.contains('rate limit')) {
+      return const AuthFailure(
+        'Demasiados intentos. Espera un minuto y vuelve a intentarlo.',
+      );
+    }
+    if (message.contains('already registered') ||
+        message.contains('already been registered')) {
+      return const AuthFailure('Este correo ya tiene una cuenta.');
+    }
+    if (message.contains('invalid login credentials')) {
+      return const AuthFailure('El correo o la contraseña no son correctos.');
+    }
     return const AuthFailure();
   }
 

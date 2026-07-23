@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/failures.dart';
 import '../../../core/widgets/brand_logo.dart';
 import '../data/auth_providers.dart';
 
@@ -20,6 +21,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _loading = false;
   bool _obscure = true;
   String? _error;
+  String? _success;
 
   @override
   void dispose() {
@@ -33,15 +35,26 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     setState(() {
       _loading = true;
       _error = null;
+      _success = null;
     });
     try {
-      await ref.read(authRepositoryProvider).signUp(
-            email: _email.text.trim(),
-            password: _password.text,
-          );
-      // El redirect del router lleva a Home tras crear la sesión.
+      final repository = ref.read(authRepositoryProvider);
+      await repository.signUp(
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+      if (mounted && repository.currentUser == null) {
+        setState(() {
+          _success =
+              'Cuenta creada. Revisa tu correo y confirma el enlace antes de iniciar sesión.';
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = 'No pudimos crear tu cuenta.');
+      if (mounted) {
+        setState(() {
+          _error = e is Failure ? e.message : 'No pudimos crear tu cuenta.';
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -90,11 +103,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         labelText: 'Contraseña',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       validator: (v) {
@@ -110,6 +124,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                     ],
+                    if (_success != null) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        _success!,
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _loading ? null : _submit,
@@ -117,7 +138,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ? const SizedBox(
                               height: 22,
                               width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                              ),
                             )
                           : const Text('Crear cuenta'),
                     ),

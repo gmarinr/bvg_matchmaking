@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
+import '../../../core/errors/failures.dart';
 import '../../../core/widgets/brand_logo.dart';
 import '../data/auth_providers.dart';
 
@@ -36,13 +37,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).signIn(
-            email: _email.text.trim(),
-            password: _password.text,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signIn(email: _email.text.trim(), password: _password.text);
       // El redirect del router lleva a Home automáticamente.
     } catch (e) {
-      if (mounted) setState(() => _error = 'No pudimos iniciar sesión.');
+      if (mounted) {
+        setState(() {
+          _error = e is Failure ? e.message : 'No pudimos iniciar sesión.';
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -69,8 +73,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Text(
                       'Match Making',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -106,11 +111,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         labelText: 'Contraseña',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       validator: (v) {
@@ -133,7 +139,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ? const SizedBox(
                               height: 22,
                               width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.5),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                              ),
                             )
                           : const Text('Iniciar sesión'),
                     ),
