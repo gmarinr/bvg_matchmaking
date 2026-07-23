@@ -45,9 +45,13 @@ Riverpod inyecta las implementaciones de Supabase.
 
 ## Base de datos
 
-La migración inicial se encuentra en:
+Las migraciones se encuentran en:
 
 `supabase/migrations/20260722000000_initial_matchmaking_schema.sql`
+
+`supabase/migrations/20260723000000_harden_private_helpers.sql`
+
+`supabase/migrations/20260723010000_revoke_public_helper_execute.sql`
 
 Incluye:
 
@@ -58,8 +62,9 @@ Incluye:
 - triggers para crear la participación del organizador y sincronizar cupos;
 - políticas RLS para autenticación, perfiles, partidos y participaciones.
 
-La migración todavía debe aplicarse al proyecto Supabase correspondiente antes
-de probar la persistencia remota.
+La migración inicial y los ajustes de seguridad ya fueron aplicados al proyecto
+Supabase configurado mediante MCP. En otro proyecto deben aplicarse en orden
+antes de probar la persistencia remota.
 
 ## Configuración segura
 
