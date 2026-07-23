@@ -36,6 +36,10 @@ final matchesProvider = FutureProvider.autoDispose<List<Match>>(
       ref.watch(matchRepositoryProvider).searchMatches(const MatchFilter()),
 );
 
+final matchProvider = FutureProvider.autoDispose.family<Match?, String>(
+  (ref, matchId) => ref.watch(matchRepositoryProvider).getMatch(matchId),
+);
+
 final myParticipationsProvider = FutureProvider.autoDispose
     .family<List<MatchParticipation>, String>(
       (ref, userId) => ref

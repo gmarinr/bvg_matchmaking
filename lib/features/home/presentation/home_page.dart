@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/data/auth_providers.dart';
+import '../../matches/data/matches_providers.dart';
+import '../../matches/presentation/create_match_page.dart';
 import '../../matches/presentation/matches_page.dart';
 import '../../matches/presentation/my_participations_page.dart';
 import '../../profile/presentation/profile_page.dart';
@@ -42,7 +44,12 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(
-              onPressed: () {},
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CreateMatchPage()),
+                );
+                if (mounted) ref.invalidate(matchesProvider);
+              },
               icon: const Icon(Icons.add),
               label: const Text('Crear partido'),
             )

@@ -6,6 +6,7 @@ import '../../../core/domain/enums.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match_participation.dart';
+import 'manage_match_page.dart';
 
 class MyParticipationsPage extends ConsumerWidget {
   const MyParticipationsPage({super.key});
@@ -117,6 +118,19 @@ class _ParticipationCardState extends ConsumerState<ParticipationCard> {
                     ),
                   ),
                 ],
+              ),
+            ],
+            if (isOrganizer) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ManageMatchPage(matchId: participation.matchId),
+                  ),
+                ),
+                icon: const Icon(Icons.manage_accounts_outlined),
+                label: const Text('Gestionar solicitudes'),
               ),
             ],
             if (participation.attendanceStatus != AttendanceStatus.unknown)
