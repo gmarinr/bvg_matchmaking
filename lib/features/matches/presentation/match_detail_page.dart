@@ -312,6 +312,10 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
     ref.invalidate(myParticipationProvider(_match.id));
     ref.invalidate(matchDetailProvider(_match.id));
     ref.invalidate(matchesListProvider);
+    // También la lista de "Mis partidos", para que el estado de asistencia se
+    // actualice fuera del detalle.
+    final userId = ref.read(authRepositoryProvider).currentUser?.id;
+    if (userId != null) ref.invalidate(myParticipationsProvider(userId));
   }
 
   void _toast(String message) {
@@ -453,6 +457,22 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
     final declined =
         participation.attendanceStatus == AttendanceStatus.declined;
 
+    // Botón "No podré ir": aparece una vez aceptado, para poder desistir.
+    final declineButton = OutlinedButton(
+      onPressed: _busy
+          ? null
+          : () => _setAttendance(participation.id, AttendanceStatus.declined),
+      child: const Text('No podré ir'),
+    );
+
+    // Botón "Confirmar asistencia": solo mientras aún no se confirmó.
+    final confirmButton = FilledButton(
+      onPressed: _busy
+          ? null
+          : () => _setAttendance(participation.id, AttendanceStatus.confirmed),
+      child: const Text('Confirmar asistencia'),
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -465,34 +485,21 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
               : 'Fuiste aceptado. Confirma tu asistencia.',
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _busy || declined
-                    ? null
-                    : () => _setAttendance(
-                        participation.id,
-                        AttendanceStatus.declined,
-                      ),
-                child: const Text('No podré ir'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: FilledButton(
-                onPressed: _busy || confirmed
-                    ? null
-                    : () => _setAttendance(
-                        participation.id,
-                        AttendanceStatus.confirmed,
-                      ),
-                child: const Text('Confirmar asistencia'),
-              ),
-            ),
-          ],
-        ),
+        // Una vez confirmada la asistencia se retira "Confirmar asistencia" y
+        // solo queda la opción de avisar que no podrá ir. Si desistió, se le
+        // ofrece volver a confirmar.
+        if (confirmed)
+          SizedBox(width: double.infinity, child: declineButton)
+        else if (declined)
+          SizedBox(width: double.infinity, child: confirmButton)
+        else
+          Row(
+            children: [
+              Expanded(child: declineButton),
+              const SizedBox(width: 12),
+              Expanded(flex: 2, child: confirmButton),
+            ],
+          ),
       ],
     );
   }

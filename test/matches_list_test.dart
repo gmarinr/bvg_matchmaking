@@ -25,7 +25,7 @@ void main() {
   testWidgets('la lista muestra los partidos semilla', (tester) async {
     await _pumpList(tester);
 
-    expect(find.byType(SportSelectorCard), findsNWidgets(4));
+    expect(find.byType(SportSelectorCard), findsNWidgets(5));
     expect(find.text('Fútbol 7 en La Reina'), findsNothing);
     expect(find.text('Básquet 3x3 nocturno'), findsNothing);
   });

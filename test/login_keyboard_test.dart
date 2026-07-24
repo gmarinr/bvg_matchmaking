@@ -24,7 +24,7 @@ void main() {
     );
 
     await tester.pumpAndSettle(const Duration(milliseconds: 700));
-    expect(find.byType(SportSelectorCard), findsNWidgets(4));
+    expect(find.byType(SportSelectorCard), findsNWidgets(5));
     expect(find.text('Fútbol 7 en La Reina'), findsNothing);
   });
 }

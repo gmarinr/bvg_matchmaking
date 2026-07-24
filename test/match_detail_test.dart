@@ -101,4 +101,26 @@ void main() {
     expect(find.text('Eres el organizador de este partido.'), findsOneWidget);
     expect(find.text('Solicitar participación'), findsNothing);
   });
+
+  testWidgets('al confirmar asistencia solo queda la opción de no ir', (
+    tester,
+  ) async {
+    // user-c es participante aceptado de m4, aún sin confirmar asistencia.
+    await _pumpDetail(tester, userId: 'user-c', matchId: 'm4');
+
+    // Aceptado y sin confirmar: se ofrecen ambas acciones.
+    expect(find.text('Confirmar asistencia'), findsOneWidget);
+    expect(find.text('No podré ir'), findsOneWidget);
+
+    await tester.tap(find.text('Confirmar asistencia'));
+    await _settle(tester);
+
+    // Tras confirmar desaparece "Confirmar asistencia" y solo queda "No podré ir".
+    expect(find.text('Confirmar asistencia'), findsNothing);
+    expect(find.text('No podré ir'), findsOneWidget);
+    expect(
+      find.text('Estás dentro y confirmaste tu asistencia.'),
+      findsOneWidget,
+    );
+  });
 }

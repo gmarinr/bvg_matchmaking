@@ -11,11 +11,16 @@ class SportSelectorCard extends StatelessWidget {
     required this.sport,
     required this.selected,
     required this.onTap,
+    this.expand = false,
   });
 
   final Sport sport;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Si es `true`, la tarjeta llena el espacio disponible (para una cuadrícula).
+  /// Si es `false`, usa el ancho fijo pensado para el carrusel horizontal.
+  final bool expand;
 
   static String heroTag(String sportId) => 'sport-$sportId';
 
@@ -46,9 +51,9 @@ class SportSelectorCard extends StatelessWidget {
           selected: selected,
           label: label,
           child: SizedBox(
-            width: 104,
+            width: expand ? null : 104,
             child: Card(
-              margin: const EdgeInsets.only(right: 10),
+              margin: expand ? EdgeInsets.zero : const EdgeInsets.only(right: 10),
               clipBehavior: Clip.antiAlias,
               color: selected ? scheme.primaryContainer : null,
               child: InkWell(

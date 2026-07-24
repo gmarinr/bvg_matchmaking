@@ -9,7 +9,6 @@ import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match_participation.dart';
-import 'manage_requests_page.dart';
 import 'providers/matches_list_providers.dart';
 import 'widgets/match_card.dart';
 
@@ -45,7 +44,7 @@ class MyParticipationsPage extends ConsumerWidget {
   }
 }
 
-class ParticipationCard extends ConsumerStatefulWidget {
+class ParticipationCard extends ConsumerWidget {
   const ParticipationCard({
     required this.participation,
     required this.userId,
@@ -56,36 +55,7 @@ class ParticipationCard extends ConsumerStatefulWidget {
   final String userId;
 
   @override
-  ConsumerState<ParticipationCard> createState() => _ParticipationCardState();
-}
-
-class _ParticipationCardState extends ConsumerState<ParticipationCard> {
-  bool _loading = false;
-
-  Future<void> _setAttendance(AttendanceStatus status) async {
-    setState(() => _loading = true);
-    try {
-      await ref
-          .read(participationRepositoryProvider)
-          .setAttendance(
-            participationId: widget.participation.id,
-            status: status,
-          );
-      ref.invalidate(myParticipationsProvider(widget.userId));
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_errorMessage(error))));
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final participation = widget.participation;
+  Widget build(BuildContext context, WidgetRef ref) {
     final isOrganizer = participation.role == ParticipantRole.organizer;
     final matchAsync = ref.watch(matchProvider(participation.matchId));
     final sportsById = ref.watch(sportsByIdProvider);
@@ -119,46 +89,26 @@ class _ParticipationCardState extends ConsumerState<ParticipationCard> {
             MatchCard(
               match: match,
               sportName: sportsById[match.sportId]?.name ?? 'Deporte',
-              participationStatus: participation.participationStatus,
+              // El organizador ve el distintivo de organizador; el resto, el
+              // estado de su solicitud.
+              participationStatus: isOrganizer
+                  ? null
+                  : participation.participationStatus,
+              isOrganizer: isOrganizer,
               onTap: () => context.push(AppRoutes.matchDetailPath(match.id)),
             ),
-            if (participation.isAccepted && !isOrganizer) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _loading
-                          ? null
-                          : () => _setAttendance(AttendanceStatus.declined),
-                      child: const Text('No asistiré'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _loading
-                          ? null
-                          : () => _setAttendance(AttendanceStatus.confirmed),
-                      child: const Text('Confirmar'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
             if (isOrganizer) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ManageRequestsPage(matchId: participation.matchId),
-                  ),
+                onPressed: () => context.push(
+                  AppRoutes.manageRequestsPath(participation.matchId),
                 ),
                 icon: const Icon(Icons.manage_accounts_outlined),
                 label: const Text('Gestionar solicitudes'),
               ),
             ],
+            // La asistencia se gestiona desde el detalle del partido; aquí solo
+            // se muestra como estado de lectura.
             if (participation.attendanceStatus != AttendanceStatus.unknown)
               Padding(
                 padding: const EdgeInsets.only(top: 8),

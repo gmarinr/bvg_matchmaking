@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../../core/domain/enums.dart';
 import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
+import '../../users/data/user_search_providers.dart';
+import '../../users/presentation/public_profile_page.dart';
 import '../data/matches_providers.dart';
 import '../domain/match.dart';
 import '../domain/match_participation.dart';
@@ -242,8 +246,14 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final p = widget.participation;
-    final profileAsync = ref.watch(userProfileProvider(p.userId));
-    final name = profileAsync.valueOrNull?.displayName ?? p.userId;
+    final profileAsync = ref.watch(publicUserLookupProvider(p.userId));
+    // Nunca mostramos el identificador crudo: mientras carga el perfil se ve un
+    // texto neutro y, si no existe, un rótulo genérico.
+    final name = profileAsync.when(
+      loading: () => 'Cargando…',
+      error: (_, _) => 'Participante',
+      data: (profile) => profile?.displayName ?? 'Participante',
+    );
     final commune = profileAsync.valueOrNull?.commune;
 
     // Sin cupos libres no se puede aceptar otra solicitud.
@@ -258,47 +268,51 @@ class _RequestTileState extends ConsumerState<_RequestTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: scheme.primaryContainer,
-                foregroundColor: scheme.onPrimaryContainer,
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+          // La cabecera (avatar + nombre) es cliqueable y abre el perfil de la
+          // persona, igual que en la lista de amigos.
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => context.push(AppRoutes.userProfilePath(p.userId)),
+            child: Row(
+              children: [
+                Hero(
+                  tag: friendAvatarTag(p.userId),
+                  child: InitialAvatar(name: name, radius: 22),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    Text(
-                      [if (p.isOrganizer) 'Organizador', ?commune].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                      Text(
+                        [if (p.isOrganizer) 'Organizador', ?commune].join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (!widget.pending)
-                _StateChip(
-                  label: p.isAccepted
-                      ? p.attendanceStatus.label
-                      : p.participationStatus.label,
-                ),
-            ],
+                if (!widget.pending)
+                  _StateChip(
+                    label: p.isAccepted
+                        ? p.attendanceStatus.label
+                        : p.participationStatus.label,
+                  )
+                else
+                  Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+              ],
+            ),
           ),
           if (widget.pending) ...[
             const SizedBox(height: 12),

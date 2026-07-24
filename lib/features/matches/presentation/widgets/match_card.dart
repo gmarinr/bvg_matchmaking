@@ -13,12 +13,17 @@ class MatchCard extends StatelessWidget {
     required this.match,
     required this.sportName,
     this.participationStatus,
+    this.isOrganizer = false,
     this.onTap,
   });
 
   final Match match;
   final String sportName;
   final ParticipationStatus? participationStatus;
+
+  /// Si el usuario es el organizador del partido, se muestra un distintivo
+  /// "Eres el organizador" en lugar del estado de participación.
+  final bool isOrganizer;
   final VoidCallback? onTap;
 
   @override
@@ -82,13 +87,47 @@ class MatchCard extends StatelessWidget {
                   _Slots(match: match),
                 ],
               ),
-              if (participationStatus != null) ...[
+              if (isOrganizer) ...[
+                const SizedBox(height: 12),
+                const _OrganizerTag(),
+              ] else if (participationStatus != null) ...[
                 const SizedBox(height: 12),
                 _ParticipationStatus(status: participationStatus!),
               ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OrganizerTag extends StatelessWidget {
+  const _OrganizerTag();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.shield_outlined, size: 18, color: scheme.onPrimaryContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Eres el organizador',
+              style: TextStyle(
+                color: scheme.onPrimaryContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

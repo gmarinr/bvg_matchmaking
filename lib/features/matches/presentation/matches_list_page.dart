@@ -21,12 +21,7 @@ class MatchesListPage extends ConsumerWidget {
     final showingOnlySports = showSportSelector && filter.sportId == null;
 
     if (showingOnlySports) {
-      return const Column(
-        children: [
-          _SportSelectorRow(),
-          Expanded(child: SizedBox.shrink()),
-        ],
-      );
+      return const _SportSelectorGrid();
     }
 
     final matchesAsync = ref.watch(matchesListProvider);
@@ -83,6 +78,71 @@ class _MatchesList extends ConsumerWidget {
           onTap: onOpenMatch == null ? null : () => onOpenMatch!(match),
         );
       },
+    );
+  }
+}
+
+/// Cuadrícula de deportes que se muestra al entrar a "Partidos", antes de
+/// elegir un deporte. Dos columnas, con scroll cuando el catálogo crece.
+class _SportSelectorGrid extends ConsumerWidget {
+  const _SportSelectorGrid();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final sportsAsync = ref.watch(sportsProvider);
+    final selected = ref.watch(matchFilterProvider).sportId;
+    final notifier = ref.read(matchFilterProvider.notifier);
+
+    return sportsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => Center(
+        child: Text(
+          'No pudimos cargar los deportes',
+          style: theme.textTheme.titleMedium,
+        ),
+      ),
+      data: (sports) => CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Elige un deporte',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+            sliver: SliverGrid(
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.5,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, i) {
+                  final sport = sports[i];
+                  return SportSelectorCard(
+                    sport: sport,
+                    selected: selected == sport.id,
+                    expand: true,
+                    onTap: () => selected == sport.id
+                        ? notifier.clearAll()
+                        : notifier.setSport(sport.id),
+                  );
+                },
+                childCount: sports.length,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

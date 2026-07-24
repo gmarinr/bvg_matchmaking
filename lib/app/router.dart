@@ -18,6 +18,7 @@ import '../features/profile/data/profile_providers.dart';
 import '../features/profile/domain/profile.dart';
 import '../features/profile/domain/profile_repository.dart';
 import '../features/profile/presentation/onboarding_page.dart';
+import '../features/users/presentation/public_profile_page.dart';
 import '../features/users/presentation/user_search_page.dart';
 
 /// Rutas nombradas de la app.
@@ -28,6 +29,13 @@ class AppRoutes {
   static const String register = '/register';
   static const String onboarding = '/onboarding';
   static const String userSearch = '/users/search';
+
+  /// Perfil público de otra persona. `/users/search` se declara antes para que
+  /// no sea capturada por este patrón.
+  static const String userProfile = '/users/:id';
+
+  static String userProfilePath(String id) => '/users/$id';
+
   static const String friendships = '/friendships';
   static const String home = '/home';
   static const String createMatch = '/matches/new';
@@ -88,6 +96,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.userSearch,
         builder: (context, state) => const UserSearchPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.userProfile,
+        builder: (context, state) =>
+            PublicProfilePage(userId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRoutes.friendships,
