@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/domain/enums.dart';
+import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match_participation.dart';
 import 'manage_requests_page.dart';
+import 'providers/matches_list_providers.dart';
+import 'widgets/match_card.dart';
 
 class MyParticipationsPage extends ConsumerWidget {
   const MyParticipationsPage({super.key});
@@ -82,22 +87,43 @@ class _ParticipationCardState extends ConsumerState<ParticipationCard> {
   Widget build(BuildContext context) {
     final participation = widget.participation;
     final isOrganizer = participation.role == ParticipantRole.organizer;
-    final status = participation.participationStatus.wire;
+    final matchAsync = ref.watch(matchProvider(participation.matchId));
+    final sportsById = ref.watch(sportsByIdProvider);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return matchAsync.when(
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (_, _) => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('No pudimos cargar este partido.'),
+        ),
+      ),
+      data: (match) {
+        if (match == null) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Este partido ya no está disponible.'),
+            ),
+          );
+        }
+
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              isOrganizer ? 'Partido organizado' : 'Solicitud de participación',
-              style: Theme.of(context).textTheme.titleMedium,
+            MatchCard(
+              match: match,
+              sportName: sportsById[match.sportId]?.name ?? 'Deporte',
+              participationStatus: participation.participationStatus,
+              onTap: () => context.push(AppRoutes.matchDetailPath(match.id)),
             ),
-            const SizedBox(height: 8),
-            Text('Estado: $status'),
             if (participation.isAccepted && !isOrganizer) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -121,7 +147,7 @@ class _ParticipationCardState extends ConsumerState<ParticipationCard> {
               ),
             ],
             if (isOrganizer) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
@@ -137,12 +163,13 @@ class _ParticipationCardState extends ConsumerState<ParticipationCard> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Asistencia: ${participation.attendanceStatus.wire}',
+                  'Asistencia: ${participation.attendanceStatus.label}',
+                  textAlign: TextAlign.center,
                 ),
               ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

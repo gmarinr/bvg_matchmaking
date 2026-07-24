@@ -12,11 +12,13 @@ class MatchCard extends StatelessWidget {
     super.key,
     required this.match,
     required this.sportName,
+    this.participationStatus,
     this.onTap,
   });
 
   final Match match;
   final String sportName;
+  final ParticipationStatus? participationStatus;
   final VoidCallback? onTap;
 
   @override
@@ -80,9 +82,46 @@ class MatchCard extends StatelessWidget {
                   _Slots(match: match),
                 ],
               ),
+              if (participationStatus != null) ...[
+                const SizedBox(height: 12),
+                _ParticipationStatus(status: participationStatus!),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ParticipationStatus extends StatelessWidget {
+  const _ParticipationStatus({required this.status});
+
+  final ParticipationStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.how_to_reg_outlined, size: 18, color: scheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Solicitud de participación: ${status.label}',
+              style: TextStyle(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
