@@ -31,6 +31,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _submit() async {
+    if (_loading) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _loading = true;
@@ -106,6 +107,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     TextFormField(
                       controller: _password,
                       obscureText: _obscure,
+                      textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
                       decoration: InputDecoration(
                         labelText: 'Contraseña',
@@ -119,6 +121,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
+                      onFieldSubmitted: (_) => _submit(),
                       validator: (v) {
                         if ((v ?? '').isEmpty) return 'Ingresa tu contraseña';
                         if ((v ?? '').length < 6) return 'Mínimo 6 caracteres';
