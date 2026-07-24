@@ -1,4 +1,5 @@
 import 'package:bvg_matchmaking/app/app.dart';
+import 'package:bvg_matchmaking/features/matches/presentation/widgets/sport_selector_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +15,10 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), '123456');
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pumpAndSettle(const Duration(milliseconds: 400));
+
+    expect(find.widgetWithText(SportSelectorCard, 'Fútbol'), findsOneWidget);
+    await tester.tap(find.widgetWithText(SportSelectorCard, 'Fútbol'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 500));
 
     expect(find.text('Fútbol 7 en La Reina'), findsOneWidget);
     await tester.tap(find.text('Fútbol 7 en La Reina'));

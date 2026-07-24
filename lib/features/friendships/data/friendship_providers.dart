@@ -14,6 +14,24 @@ final friendshipRepositoryProvider = Provider<FriendshipRepository>((ref) {
   return FakeFriendshipRepository();
 });
 
+final receivedFriendshipsProvider = FutureProvider.autoDispose
+    .family<List<Friendship>, String>(
+      (ref, userId) =>
+          ref.watch(friendshipRepositoryProvider).getReceivedPending(userId),
+    );
+
+final sentFriendshipsProvider = FutureProvider.autoDispose
+    .family<List<Friendship>, String>(
+      (ref, userId) =>
+          ref.watch(friendshipRepositoryProvider).getSentPending(userId),
+    );
+
+final acceptedFriendshipsProvider = FutureProvider.autoDispose
+    .family<List<Friendship>, String>(
+      (ref, userId) =>
+          ref.watch(friendshipRepositoryProvider).getAccepted(userId),
+    );
+
 class FriendshipPair {
   const FriendshipPair({required this.currentUserId, required this.otherUserId});
 

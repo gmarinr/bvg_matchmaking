@@ -74,7 +74,11 @@ class _MatchDetailBody extends ConsumerWidget {
         Row(
           children: [
             Flexible(
-              child: SportPill(matchId: match.id, sportName: sportName),
+              child: SportPill(
+                matchId: match.id,
+                sportId: match.sportId,
+                sportName: sportName,
+              ),
             ),
             const SizedBox(width: 8),
             _StatusChip(status: match.status),

@@ -71,13 +71,13 @@ class _HomePageState extends ConsumerState<HomePage> {
             label: 'Partidos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.event_available_outlined),
-            selectedIcon: Icon(Icons.event_available),
+            icon: Text('📅', style: TextStyle(fontSize: 22)),
+            selectedIcon: Text('📅', style: TextStyle(fontSize: 22)),
             label: 'Mis partidos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            icon: Text('👤', style: TextStyle(fontSize: 22)),
+            selectedIcon: Text('👤', style: TextStyle(fontSize: 22)),
             label: 'Perfil',
           ),
         ],

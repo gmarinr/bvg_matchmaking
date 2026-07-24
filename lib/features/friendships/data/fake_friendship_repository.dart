@@ -5,6 +5,49 @@ class FakeFriendshipRepository implements FriendshipRepository {
   final List<Friendship> _friendships = [];
 
   @override
+  Future<List<Friendship>> getReceivedPending(String userId) async {
+    await _tick();
+    return _friendships
+        .where(
+          (friendship) =>
+              friendship.addresseeId == userId &&
+              friendship.status == FriendshipStatus.pending,
+        )
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  @override
+  Future<List<Friendship>> getSentPending(String userId) async {
+    await _tick();
+    return _friendships
+        .where(
+          (friendship) =>
+              friendship.requesterId == userId &&
+              friendship.status == FriendshipStatus.pending,
+        )
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  @override
+  Future<List<Friendship>> getAccepted(String userId) async {
+    await _tick();
+    return _friendships
+        .where(
+          (friendship) =>
+              friendship.status == FriendshipStatus.accepted &&
+              (friendship.requesterId == userId ||
+                  friendship.addresseeId == userId),
+        )
+        .toList()
+        .reversed
+        .toList();
+  }
+
+  @override
   Future<Friendship?> getBetween({
     required String currentUserId,
     required String otherUserId,
@@ -51,6 +94,36 @@ class FakeFriendshipRepository implements FriendshipRepository {
     );
     _friendships.add(friendship);
     return friendship;
+  }
+
+  @override
+  Future<Friendship> acceptRequest(String friendshipId) =>
+      _changeStatus(friendshipId, FriendshipStatus.accepted);
+
+  @override
+  Future<Friendship> rejectRequest(String friendshipId) =>
+      _changeStatus(friendshipId, FriendshipStatus.rejected);
+
+  @override
+  Future<Friendship> cancelRequest(String friendshipId) =>
+      _changeStatus(friendshipId, FriendshipStatus.cancelled);
+
+  @override
+  Future<Friendship> removeFriendship(String friendshipId) =>
+      _changeStatus(friendshipId, FriendshipStatus.cancelled);
+
+  Future<Friendship> _changeStatus(
+    String friendshipId,
+    FriendshipStatus status,
+  ) async {
+    await _tick();
+    final index = _friendships.indexWhere(
+      (friendship) => friendship.id == friendshipId,
+    );
+    if (index < 0) throw StateError('No encontramos la solicitud.');
+    final updated = _friendships[index].copyWith(status: status);
+    _friendships[index] = updated;
+    return updated;
   }
 
   Future<void> _tick() =>

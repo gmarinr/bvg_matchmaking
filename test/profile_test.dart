@@ -15,7 +15,7 @@ void main() {
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pumpAndSettle(const Duration(milliseconds: 700));
 
-    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
 
     expect(find.text('Tu perfil deportivo'), findsOneWidget);

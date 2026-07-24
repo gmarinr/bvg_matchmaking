@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
@@ -75,6 +77,12 @@ class _UserSearchPageState extends ConsumerState<UserSearchPage> {
             onPressed: _search,
             icon: const Icon(Icons.search),
             label: const Text('Buscar'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => context.push(AppRoutes.friendships),
+            icon: const Icon(Icons.group_outlined),
+            label: const Text('Solicitudes y amigos'),
           ),
           const SizedBox(height: 24),
           if (searchedId == null)

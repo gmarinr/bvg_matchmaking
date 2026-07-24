@@ -12,6 +12,8 @@ import '../features/home/presentation/home_page.dart';
 import '../features/matches/presentation/create_match_page.dart';
 import '../features/matches/presentation/manage_requests_page.dart';
 import '../features/matches/presentation/match_detail_page.dart';
+import '../features/matches/presentation/sport_matches_page.dart';
+import '../features/friendships/presentation/friendships_page.dart';
 import '../features/profile/data/profile_providers.dart';
 import '../features/profile/domain/profile.dart';
 import '../features/profile/domain/profile_repository.dart';
@@ -26,8 +28,13 @@ class AppRoutes {
   static const String register = '/register';
   static const String onboarding = '/onboarding';
   static const String userSearch = '/users/search';
+  static const String friendships = '/friendships';
   static const String home = '/home';
   static const String createMatch = '/matches/new';
+
+  static const String sportMatches = '/sports/:id/matches';
+
+  static String sportMatchesPath(String id) => '/sports/$id/matches';
 
   /// Detalle de un partido. `/matches/new` se declara antes para que no
   /// sea capturada por este patrón.
@@ -83,12 +90,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const UserSearchPage(),
       ),
       GoRoute(
+        path: AppRoutes.friendships,
+        builder: (context, state) => const FriendshipsPage(),
+      ),
+      GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomePage(),
       ),
       GoRoute(
         path: AppRoutes.createMatch,
         builder: (context, state) => const CreateMatchPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.sportMatches,
+        builder: (context, state) => SportMatchesPage(
+          sportId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: AppRoutes.matchDetail,

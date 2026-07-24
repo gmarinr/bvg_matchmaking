@@ -25,6 +25,13 @@ class Friendship {
   final String addresseeId;
   final FriendshipStatus status;
 
+  Friendship copyWith({FriendshipStatus? status}) => Friendship(
+    id: id,
+    requesterId: requesterId,
+    addresseeId: addresseeId,
+    status: status ?? this.status,
+  );
+
   factory Friendship.fromJson(Map<String, dynamic> json) => Friendship(
     id: json['id'] as String,
     requesterId: json['requester_id'] as String,

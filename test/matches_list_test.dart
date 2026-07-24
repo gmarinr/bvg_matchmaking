@@ -1,4 +1,5 @@
 import 'package:bvg_matchmaking/features/matches/presentation/matches_list_page.dart';
+import 'package:bvg_matchmaking/features/matches/presentation/widgets/sport_selector_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,16 +25,16 @@ void main() {
   testWidgets('la lista muestra los partidos semilla', (tester) async {
     await _pumpList(tester);
 
-    expect(find.text('Fútbol 7 en La Reina'), findsOneWidget);
-    expect(find.text('Básquet 3x3 nocturno'), findsOneWidget);
-    expect(find.text('Todos'), findsOneWidget);
+    expect(find.byType(SportSelectorCard), findsNWidgets(4));
+    expect(find.text('Fútbol 7 en La Reina'), findsNothing);
+    expect(find.text('Básquet 3x3 nocturno'), findsNothing);
   });
 
-  testWidgets('filtrar por deporte reduce la lista', (tester) async {
+  testWidgets('seleccionar un deporte despliega sus partidos', (tester) async {
     await _pumpList(tester);
 
     // "Fútbol" es de los primeros chips (visible sin scroll horizontal).
-    await tester.tap(find.widgetWithText(FilterChip, 'Fútbol'));
+    await tester.tap(find.widgetWithText(SportSelectorCard, 'Fútbol'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 

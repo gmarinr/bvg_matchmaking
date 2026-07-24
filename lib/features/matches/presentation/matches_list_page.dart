@@ -5,22 +5,35 @@ import '../domain/match.dart';
 import 'providers/matches_list_providers.dart';
 import 'widgets/match_card.dart';
 import 'widgets/matches_filter_sheet.dart';
+import 'widgets/sport_selector_card.dart';
 
 /// Lista de partidos publicados con búsqueda por deporte y filtros avanzados.
 /// Se usa dentro del contenedor Home (no incluye Scaffold propio).
 class MatchesListPage extends ConsumerWidget {
-  const MatchesListPage({super.key, this.onOpenMatch});
+  const MatchesListPage({super.key, this.onOpenMatch, this.showSportSelector = true});
 
   final void Function(Match match)? onOpenMatch;
+  final bool showSportSelector;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final matchesAsync = ref.watch(matchesListProvider);
     final filter = ref.watch(matchFilterProvider);
+    final showingOnlySports = showSportSelector && filter.sportId == null;
+
+    if (showingOnlySports) {
+      return const Column(
+        children: [
+          _SportSelectorRow(),
+          Expanded(child: SizedBox.shrink()),
+        ],
+      );
+    }
+
+    final matchesAsync = ref.watch(matchesListProvider);
 
     return Column(
       children: [
-        const _SportChipsRow(),
+        if (showSportSelector) const _SportSelectorRow(),
         _FilterBar(filter: filter),
         Expanded(
           child: RefreshIndicator(
@@ -74,8 +87,8 @@ class _MatchesList extends ConsumerWidget {
   }
 }
 
-class _SportChipsRow extends ConsumerWidget {
-  const _SportChipsRow();
+class _SportSelectorRow extends ConsumerWidget {
+  const _SportSelectorRow();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,32 +98,23 @@ class _SportChipsRow extends ConsumerWidget {
 
     return sportsAsync.maybeWhen(
       data: (sports) => SizedBox(
-        height: 48,
+        height: 124,
         child: ListView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: const Text('Todos'),
-                selected: selected == null,
-                onSelected: (_) => notifier.setSport(null),
-              ),
-            ),
             for (final sport in sports)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(sport.name),
-                  selected: selected == sport.id,
-                  onSelected: (sel) => notifier.setSport(sel ? sport.id : null),
-                ),
+              SportSelectorCard(
+                sport: sport,
+                selected: selected == sport.id,
+                onTap: () => selected == sport.id
+                    ? notifier.clearAll()
+                    : notifier.setSport(sport.id),
               ),
           ],
         ),
       ),
-      orElse: () => const SizedBox(height: 48),
+      orElse: () => const SizedBox(height: 124),
     );
   }
 }
