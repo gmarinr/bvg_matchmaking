@@ -23,7 +23,7 @@ class SupabaseMatchRepository implements MatchRepository {
         query = query.eq('sport_id', filter.sportId!);
       }
       if (filter.commune != null && filter.commune!.trim().isNotEmpty) {
-        query = query.ilike('commune', '%${filter.commune!.trim()}%');
+        query = query.eq('commune_code', filter.commune!.trim());
       }
       if (filter.skillLevel != null) {
         query = query.eq('skill_level', filter.skillLevel!.wire);

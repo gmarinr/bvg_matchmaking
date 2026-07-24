@@ -5,6 +5,8 @@ import '../../../core/errors/failures.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/profile_providers.dart';
 import '../domain/profile.dart';
+import '../../communes/data/commune_providers.dart';
+import '../../communes/presentation/commune_selector.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -37,7 +39,7 @@ class ProfileForm extends ConsumerStatefulWidget {
 
 class _ProfileFormState extends ConsumerState<ProfileForm> {
   late final TextEditingController _displayName;
-  late final TextEditingController _commune;
+  String? _communeCode;
   bool _loading = false;
 
   @override
@@ -46,18 +48,22 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
     _displayName = TextEditingController(
       text: widget.profile?.displayName ?? '',
     );
-    _commune = TextEditingController(text: widget.profile?.commune ?? '');
+    _communeCode = widget.profile?.communeCode;
   }
 
   @override
   void dispose() {
     _displayName.dispose();
-    _commune.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    if (_displayName.text.trim().isEmpty || _commune.text.trim().isEmpty) {
+    final commune = ref
+        .read(communesProvider)
+        .valueOrNull
+        ?.where((item) => item.code == _communeCode)
+        .firstOrNull;
+    if (_displayName.text.trim().isEmpty || commune == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completa tu nombre y comuna.')),
       );
@@ -70,7 +76,8 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
     final profile = Profile(
       id: widget.userId,
       displayName: _displayName.text.trim(),
-      commune: _commune.text.trim(),
+      commune: commune.name,
+      communeCode: commune.code,
       createdAt: current?.createdAt ?? now,
       updatedAt: now,
       avatarUrl: current?.avatarUrl,
@@ -115,13 +122,9 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _commune,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Comuna',
-            prefixIcon: Icon(Icons.location_on_outlined),
-          ),
+        CommuneSelector(
+          value: _communeCode,
+          onChanged: (value) => setState(() => _communeCode = value),
         ),
         const SizedBox(height: 24),
         FilledButton(

@@ -8,6 +8,8 @@ import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match.dart';
 import 'providers/matches_list_providers.dart';
+import '../../communes/presentation/commune_selector.dart';
+import '../../communes/data/commune_providers.dart';
 
 /// Formulario para crear y publicar un partido (Flujo A).
 class CreateMatchPage extends ConsumerStatefulWidget {
@@ -21,10 +23,10 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
-  final _commune = TextEditingController();
   final _location = TextEditingController();
 
   String? _sportId;
+  String? _communeCode;
   SkillLevel _skill = SkillLevel.intermediate;
   DateTime? _startAt;
   int _maxParticipants = 10;
@@ -38,7 +40,6 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
   void dispose() {
     _title.dispose();
     _description.dispose();
-    _commune.dispose();
     _location.dispose();
     super.dispose();
   }
@@ -106,7 +107,12 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
           ? null
           : _description.text.trim(),
       startAt: _startAt!,
-      commune: _commune.text.trim(),
+      commune: ref
+          .read(communesProvider)
+          .valueOrNull!
+          .firstWhere((item) => item.code == _communeCode)
+          .name,
+      communeCode: _communeCode,
       locationText: _location.text.trim(),
       skillLevel: _skill,
       minParticipants: _minParticipants,
@@ -178,6 +184,7 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
               _Label('Título'),
               const SizedBox(height: 8),
               TextFormField(
+                key: const ValueKey('match-title-input'),
                 controller: _title,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
@@ -210,22 +217,15 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
               if (_dateTouched && _startAt == null)
                 _FieldError('Elige fecha y hora'),
               const SizedBox(height: 20),
-              _Label('Comuna'),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _commune,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  hintText: 'Ej: Ñuñoa',
-                  prefixIcon: Icon(Icons.map_outlined),
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Indica la comuna' : null,
+              CommuneSelector(
+                value: _communeCode,
+                onChanged: (value) => setState(() => _communeCode = value),
               ),
               const SizedBox(height: 16),
               _Label('Lugar'),
               const SizedBox(height: 8),
               TextFormField(
+                key: const ValueKey('match-location-input'),
                 controller: _location,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(

@@ -50,6 +50,7 @@ class FakeMatchRepository implements MatchRepository {
       description: match.description,
       startAt: match.startAt,
       commune: match.commune,
+      communeCode: match.communeCode,
       locationText: match.locationText,
       skillLevel: match.skillLevel,
       minParticipants: match.minParticipants,

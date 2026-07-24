@@ -9,10 +9,16 @@ class FakeProfileRepository implements ProfileRepository {
 
   static final DateTime _seedDate = DateTime(2026, 7, 1);
 
-  static Profile _profile(String id, String name, String commune) => Profile(
+  static Profile _profile(
+    String id,
+    String name,
+    String commune, [
+    String? code,
+  ]) => Profile(
     id: id,
     displayName: name,
     commune: commune,
+    communeCode: code,
     createdAt: _seedDate,
     updatedAt: _seedDate,
   );
@@ -20,13 +26,18 @@ class FakeProfileRepository implements ProfileRepository {
   /// Perfiles de los usuarios que aparecen en los datos semilla, para que la
   /// gestión de solicitudes muestre nombres y no identificadores.
   static final Map<String, Profile> _seedProfiles = {
-    'fake-user-1': _profile('fake-user-1', 'Tu perfil', 'Santiago'),
-    'other-user': _profile('other-user', 'Camila Rojas', 'La Reina'),
-    'user-a': _profile('user-a', 'Diego Fuentes', 'Maipú'),
-    'user-b': _profile('user-b', 'Valentina Soto', 'Estación Central'),
-    'user-c': _profile('user-c', 'Matías Herrera', 'Maipú'),
-    'user-d': _profile('user-d', 'Josefa Lagos', 'La Reina'),
-    'user-e': _profile('user-e', 'Ignacio Peña', 'Peñalolén'),
+    'fake-user-1': _profile('fake-user-1', 'Tu perfil', 'Santiago', 'rm0101'),
+    'other-user': _profile('other-user', 'Camila Rojas', 'La Reina', 'rm0113'),
+    'user-a': _profile('user-a', 'Diego Fuentes', 'Maipú', 'rm0119'),
+    'user-b': _profile(
+      'user-b',
+      'Valentina Soto',
+      'Estación Central',
+      'rm0106',
+    ),
+    'user-c': _profile('user-c', 'Matías Herrera', 'Maipú', 'rm0119'),
+    'user-d': _profile('user-d', 'Josefa Lagos', 'La Reina', 'rm0113'),
+    'user-e': _profile('user-e', 'Ignacio Peña', 'Peñalolén', 'rm0122'),
   };
 
   static const List<Sport> _seedSports = [
