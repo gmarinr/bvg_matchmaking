@@ -102,25 +102,34 @@ void main() {
     expect(find.text('Solicitar participación'), findsNothing);
   });
 
-  testWidgets('al confirmar asistencia solo queda la opción de no ir', (
+  testWidgets('ser aceptado ya cuenta como asistencia, sin paso de confirmar', (
     tester,
   ) async {
-    // user-c es participante aceptado de m4, aún sin confirmar asistencia.
+    // user-c es participante aceptado de m4.
     await _pumpDetail(tester, userId: 'user-c', matchId: 'm4');
 
-    // Aceptado y sin confirmar: se ofrecen ambas acciones.
-    expect(find.text('Confirmar asistencia'), findsOneWidget);
-    expect(find.text('No podré ir'), findsOneWidget);
-
-    await tester.tap(find.text('Confirmar asistencia'));
-    await _settle(tester);
-
-    // Tras confirmar desaparece "Confirmar asistencia" y solo queda "No podré ir".
+    // No hay paso de confirmar: aceptado equivale a estar participando.
+    expect(find.text('Estás participando en este partido.'), findsOneWidget);
     expect(find.text('Confirmar asistencia'), findsNothing);
     expect(find.text('No podré ir'), findsOneWidget);
-    expect(
-      find.text('Estás dentro y confirmaste tu asistencia.'),
-      findsOneWidget,
-    );
+  });
+
+  testWidgets('al no poder ir se sale del partido y se puede re-solicitar', (
+    tester,
+  ) async {
+    await _pumpDetail(tester, userId: 'user-c', matchId: 'm4');
+
+    // "No podré ir" pide confirmación con la advertencia.
+    await tester.tap(find.text('No podré ir'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('deberás solicitar un cupo'), findsOneWidget);
+
+    await tester.tap(find.text('Sí, no podré ir'));
+    await _settle(tester);
+
+    // Queda fuera del partido y se le ofrece volver a solicitar un cupo.
+    expect(find.textContaining('Saliste de este partido'), findsOneWidget);
+    expect(find.text('Solicitar participación'), findsOneWidget);
   });
 }

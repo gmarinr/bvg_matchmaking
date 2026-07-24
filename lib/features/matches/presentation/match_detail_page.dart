@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
 import '../../../core/domain/enums.dart';
+import '../../../core/errors/failures.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
@@ -332,7 +333,9 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
       _refresh();
       _toast(okMessage);
     } catch (e) {
-      _toast('No pudimos completar la acción.');
+      // Mostramos el motivo real (p. ej. permiso RLS) en vez de un genérico,
+      // para poder diagnosticar fallos del backend.
+      _toast(e is Failure ? e.message : 'No pudimos completar la acción.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -352,15 +355,41 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
     'Cancelaste tu solicitud.',
   );
 
-  Future<void> _setAttendance(String participationId, AttendanceStatus s) =>
-      _run(
-        () => ref
-            .read(participationRepositoryProvider)
-            .setAttendance(participationId: participationId, status: s),
-        s == AttendanceStatus.confirmed
-            ? 'Confirmaste tu asistencia.'
-            : 'Avisaste que no podrás ir.',
-      );
+  /// Salir del partido. Avisa que el cupo se libera y que para volver hay que
+  /// solicitar un cupo de nuevo.
+  Future<void> _confirmLeave(MatchParticipation participation) async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿No podrás ir?'),
+        content: const Text(
+          'Saldrás del partido y tu cupo quedará libre para otra persona. '
+          'Si más adelante quieres participar, deberás solicitar un cupo de '
+          'nuevo y esperar que el organizador te acepte.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sí, no podré ir'),
+          ),
+        ],
+      ),
+    );
+    if (leave != true) return;
+    await _run(
+      () => ref
+          .read(participationRepositoryProvider)
+          .cancelParticipation(participation.id),
+      'Saliste del partido. Tu cupo quedó libre.',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -407,20 +436,41 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
   }
 
   Widget _participantActions(String userId, MatchParticipation? participation) {
-    if (participation == null) {
+    // Quien salió del partido (participación cancelada) vuelve a la situación de
+    // poder solicitar un cupo, tras el aviso de que debe pedir permiso de nuevo.
+    final leftBefore =
+        participation?.participationStatus == ParticipationStatus.cancelled;
+
+    if (participation == null || leftBefore) {
       if (!_match.isJoinable) {
         return _Note(icon: Icons.block, text: _notJoinableReason());
       }
-      return FilledButton.icon(
-        onPressed: _busy ? null : () => _request(userId),
-        icon: _busy
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
-              )
-            : const Icon(Icons.how_to_reg),
-        label: Text(_busy ? 'Enviando…' : 'Solicitar participación'),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (leftBefore) ...[
+            _Note(
+              icon: Icons.info_outline,
+              text:
+                  'Saliste de este partido. Para volver, solicita un cupo otra vez.',
+            ),
+            const SizedBox(height: 12),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _busy ? null : () => _request(userId),
+              icon: _busy
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : const Icon(Icons.how_to_reg),
+              label: Text(_busy ? 'Enviando…' : 'Solicitar participación'),
+            ),
+          ),
+        ],
       );
     }
 
@@ -439,67 +489,34 @@ class _ActionBarState extends ConsumerState<_ActionBar> {
           ),
         ],
       ),
-      ParticipationStatus.accepted => _attendanceActions(participation),
+      ParticipationStatus.accepted => _acceptedActions(participation),
       ParticipationStatus.rejected => _Note(
         icon: Icons.cancel_outlined,
         text: 'Tu solicitud fue rechazada.',
       ),
-      ParticipationStatus.cancelled => _Note(
-        icon: Icons.info_outline,
-        text: 'Cancelaste tu participación en este partido.',
-      ),
+      // Manejado arriba (leftBefore); rama requerida por exhaustividad.
+      ParticipationStatus.cancelled => const SizedBox.shrink(),
     };
   }
 
-  Widget _attendanceActions(MatchParticipation participation) {
-    final confirmed =
-        participation.attendanceStatus == AttendanceStatus.confirmed;
-    final declined =
-        participation.attendanceStatus == AttendanceStatus.declined;
-
-    // Botón "No podré ir": aparece una vez aceptado, para poder desistir.
-    final declineButton = OutlinedButton(
-      onPressed: _busy
-          ? null
-          : () => _setAttendance(participation.id, AttendanceStatus.declined),
-      child: const Text('No podré ir'),
-    );
-
-    // Botón "Confirmar asistencia": solo mientras aún no se confirmó.
-    final confirmButton = FilledButton(
-      onPressed: _busy
-          ? null
-          : () => _setAttendance(participation.id, AttendanceStatus.confirmed),
-      child: const Text('Confirmar asistencia'),
-    );
-
+  /// Ser aceptado ya cuenta como asistencia: no hay paso de confirmación. La
+  /// única acción es avisar que no se podrá ir, que libera el cupo.
+  Widget _acceptedActions(MatchParticipation participation) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         _Note(
           icon: Icons.check_circle_outline,
-          text: confirmed
-              ? 'Estás dentro y confirmaste tu asistencia.'
-              : declined
-              ? 'Estás dentro, pero avisaste que no podrás ir.'
-              : 'Fuiste aceptado. Confirma tu asistencia.',
+          text: 'Estás participando en este partido.',
         ),
         const SizedBox(height: 12),
-        // Una vez confirmada la asistencia se retira "Confirmar asistencia" y
-        // solo queda la opción de avisar que no podrá ir. Si desistió, se le
-        // ofrece volver a confirmar.
-        if (confirmed)
-          SizedBox(width: double.infinity, child: declineButton)
-        else if (declined)
-          SizedBox(width: double.infinity, child: confirmButton)
-        else
-          Row(
-            children: [
-              Expanded(child: declineButton),
-              const SizedBox(width: 12),
-              Expanded(flex: 2, child: confirmButton),
-            ],
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _busy ? null : () => _confirmLeave(participation),
+            child: const Text('No podré ir'),
           ),
+        ),
       ],
     );
   }

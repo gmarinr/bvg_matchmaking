@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/domain/enums.dart';
-import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
 import '../data/matches_providers.dart';
 import '../domain/match_participation.dart';
@@ -27,17 +26,23 @@ class MyParticipationsPage extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(child: Text(_errorMessage(error))),
       data: (items) {
-        if (items.isEmpty) {
+        // Quien salió de un partido (participación cancelada) ya no lo ve aquí.
+        final visible = items
+            .where(
+              (p) => p.participationStatus != ParticipationStatus.cancelled,
+            )
+            .toList();
+        if (visible.isEmpty) {
           return const Center(
             child: Text('Todavía no tienes participaciones.'),
           );
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: items.length,
+          itemCount: visible.length,
           separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) =>
-              ParticipationCard(participation: items[index], userId: user.id),
+              ParticipationCard(participation: visible[index], userId: user.id),
         );
       },
     );
@@ -107,16 +112,6 @@ class ParticipationCard extends ConsumerWidget {
                 label: const Text('Gestionar solicitudes'),
               ),
             ],
-            // La asistencia se gestiona desde el detalle del partido; aquí solo
-            // se muestra como estado de lectura.
-            if (participation.attendanceStatus != AttendanceStatus.unknown)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Asistencia: ${participation.attendanceStatus.label}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
           ],
         );
       },

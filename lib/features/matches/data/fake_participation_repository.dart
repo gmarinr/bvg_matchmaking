@@ -30,12 +30,28 @@ class FakeParticipationRepository implements ParticipationRepository {
     required String userId,
   }) async {
     await _tick();
-    final exists = _store.participations.any(
+    final existingIndex = _store.participations.indexWhere(
       (p) => p.matchId == matchId && p.userId == userId,
     );
-    if (exists) {
-      throw StateError('Ya solicitaste participar en este partido.');
+    if (existingIndex != -1) {
+      final existing = _store.participations[existingIndex];
+      final active =
+          existing.participationStatus == ParticipationStatus.pending ||
+          existing.participationStatus == ParticipationStatus.accepted;
+      if (active) {
+        throw StateError('Ya solicitaste participar en este partido.');
+      }
+      // Quien salió (cancelada) o fue rechazado puede volver a solicitar: se
+      // reactiva la misma fila como una nueva solicitud pendiente.
+      final reactivated = existing.copyWith(
+        participationStatus: ParticipationStatus.pending,
+        attendanceStatus: AttendanceStatus.unknown,
+        updatedAt: DateTime.now(),
+      );
+      _store.participations[existingIndex] = reactivated;
+      return reactivated;
     }
+
     final now = DateTime.now();
     final row = MatchParticipation(
       id: _store.nextId('part'),

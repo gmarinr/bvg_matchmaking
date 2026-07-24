@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../errors/failures.dart';
@@ -46,9 +47,18 @@ Failure mapSupabaseError(Object error) {
           'La operación no cumple una regla del partido.',
         );
       default:
-        return const UnexpectedFailure();
+        // Código de Postgres que aún no clasificamos. Mostramos el detalle
+        // (código + mensaje) para poder diagnosticar el problema del backend.
+        debugPrint(
+          'Postgrest no mapeado — code: ${error.code}, message: ${error.message}, '
+          'details: ${error.details}, hint: ${error.hint}',
+        );
+        return UnexpectedFailure(
+          'Error de base de datos (${error.code}): ${error.message}',
+        );
     }
   }
 
-  return const UnexpectedFailure();
+  debugPrint('Error no clasificado: ${error.runtimeType} — $error');
+  return UnexpectedFailure('Error inesperado: $error');
 }
