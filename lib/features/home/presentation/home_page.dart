@@ -21,7 +21,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   int _index = 1;
 
   static const _titles = [
-    'Buscar',
+    'Buscar usuarios',
     'Partidos',
     'Mis participaciones',
     'Perfil',

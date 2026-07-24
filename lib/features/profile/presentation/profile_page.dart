@@ -178,7 +178,7 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Tu ID de usuario',
+                    'Tu ID',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),

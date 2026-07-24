@@ -44,12 +44,13 @@ class _UserSearchPageState extends ConsumerState<UserSearchPage> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Busca una persona usando su UUID exacto.',
+            '¡Busca a tus amigos por su ID!',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'No se pueden buscar nombres ni listar usuarios. El resultado solo muestra información pública mínima.',
+          Text(
+            'Nota: La ID se puede encontrar en la pestaña del perfil.',
+            style: const TextStyle(fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 24),
           Form(
@@ -59,14 +60,13 @@ class _UserSearchPageState extends ConsumerState<UserSearchPage> {
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.search,
               decoration: const InputDecoration(
-                labelText: 'UUID del usuario',
-                hintText: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+                hintText: 'ID del usuario',
                 prefixIcon: Icon(Icons.badge_outlined),
               ),
               validator: (value) {
                 final input = value?.trim() ?? '';
-                if (input.isEmpty) return 'Ingresa un UUID.';
-                if (!isValidUuid(input)) return 'Ingresa un UUID válido.';
+                if (input.isEmpty) return 'Ingresa una ID.';
+                if (!isValidUuid(input)) return 'Ingresa una ID válida.';
                 return null;
               },
               onFieldSubmitted: (_) => _search(),
@@ -85,15 +85,13 @@ class _UserSearchPageState extends ConsumerState<UserSearchPage> {
             label: const Text('Solicitudes y amigos'),
           ),
           const SizedBox(height: 24),
-          if (searchedId == null)
-            const _InitialSearchState()
-          else
+          if (searchedId != null)
             _LookupResult(userId: searchedId),
         ],
       );
     if (widget.embedded) return content;
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar usuario')),
+      appBar: AppBar(title: const Text('Buscar usuarios')),
       body: content,
     );
   }
@@ -262,15 +260,6 @@ class _FriendshipActionState extends ConsumerState<_FriendshipAction> {
       label: const Text('Enviar solicitud'),
     );
   }
-}
-
-class _InitialSearchState extends StatelessWidget {
-  const _InitialSearchState();
-
-  @override
-  Widget build(BuildContext context) => const Text(
-    'Pega aquí el UUID que la otra persona compartió contigo.',
-  );
 }
 
 class _EmptySearchState extends StatelessWidget {

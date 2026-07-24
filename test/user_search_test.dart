@@ -25,7 +25,7 @@ void main() {
       await tester.enterText(searchField, 'not-a-uuid');
       await tester.tap(find.text('Buscar'));
       await tester.pump();
-      expect(find.text('Ingresa un UUID válido.'), findsOneWidget);
+      expect(find.text('Ingresa una ID válida.'), findsOneWidget);
 
       await tester.enterText(
         searchField,

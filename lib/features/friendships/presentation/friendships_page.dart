@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../auth/data/auth_providers.dart';
+import '../../users/data/user_search_providers.dart';
 import '../data/friendship_providers.dart';
 import '../domain/friendship.dart';
 
@@ -178,10 +179,16 @@ class _FriendshipTileState extends ConsumerState<_FriendshipTile> {
     final otherUserId = widget.friendship.requesterId == widget.currentUserId
         ? widget.friendship.addresseeId
         : widget.friendship.requesterId;
+    final displayNameAsync = ref.watch(publicUserLookupProvider(otherUserId));
+    final displayName = displayNameAsync.when(
+      loading: () => 'Cargando usuario...',
+      error: (_, _) => 'Usuario',
+      data: (profile) => profile?.displayName ?? 'Usuario',
+    );
     final title = switch (widget.type) {
-      _FriendshipListType.received => 'Solicitud de $otherUserId',
-      _FriendshipListType.sent => 'Solicitud enviada a $otherUserId',
-      _FriendshipListType.accepted => 'Amistad con $otherUserId',
+      _FriendshipListType.received => 'Solicitud recibida a $displayName',
+      _FriendshipListType.sent => 'Solicitud enviada a $displayName',
+      _FriendshipListType.accepted => 'Amistad con $displayName',
     };
 
     return Card(
@@ -192,8 +199,7 @@ class _FriendshipTileState extends ConsumerState<_FriendshipTile> {
           children: [
             Text(title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            SelectableText(otherUserId),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             if (widget.type == _FriendshipListType.received)
               Row(
                 children: [
