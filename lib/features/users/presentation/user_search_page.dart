@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../../core/utils/labels.dart';
+import '../../auth/data/auth_providers.dart';
+import '../../friendships/data/friendship_providers.dart';
+import '../../friendships/domain/friendship.dart';
 import '../data/user_search_providers.dart';
 import '../domain/public_user_profile.dart';
 import '../domain/uuid_validator.dart';
@@ -147,9 +150,108 @@ class _PublicProfileCard extends StatelessWidget {
               ),
             if (profile.sports.isEmpty)
               const Text('Esta persona aún no registra deportes.'),
+            const SizedBox(height: 16),
+            _FriendshipAction(otherUserId: profile.id),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FriendshipAction extends ConsumerStatefulWidget {
+  const _FriendshipAction({required this.otherUserId});
+
+  final String otherUserId;
+
+  @override
+  ConsumerState<_FriendshipAction> createState() => _FriendshipActionState();
+}
+
+class _FriendshipActionState extends ConsumerState<_FriendshipAction> {
+  bool _sending = false;
+
+  Future<void> _sendRequest(String currentUserId) async {
+    setState(() => _sending = true);
+    try {
+      await ref.read(friendshipRepositoryProvider).sendRequest(
+        requesterId: currentUserId,
+        addresseeId: widget.otherUserId,
+      );
+      ref.invalidate(
+        friendshipBetweenProvider(
+          FriendshipPair(
+            currentUserId: currentUserId,
+            otherUserId: widget.otherUserId,
+          ),
+        ),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Solicitud de amistad enviada.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_errorMessage(error))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = ref.watch(currentAppUserProvider);
+    if (currentUser == null || currentUser.id == widget.otherUserId) {
+      return const SizedBox.shrink();
+    }
+
+    final pair = FriendshipPair(
+      currentUserId: currentUser.id,
+      otherUserId: widget.otherUserId,
+    );
+    final friendship = ref.watch(friendshipBetweenProvider(pair));
+    return friendship.when(
+      loading: () => const Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (error, _) => Text(_errorMessage(error)),
+      data: (value) => _buildAction(currentUser.id, value),
+    );
+  }
+
+  Widget _buildAction(String currentUserId, Friendship? friendship) {
+    if (friendship?.status == FriendshipStatus.accepted) {
+      return const Text('Ya son amigos.');
+    }
+    if (friendship?.status == FriendshipStatus.pending) {
+      if (friendship!.requesterId == currentUserId) {
+        return const OutlinedButton(
+          onPressed: null,
+          child: Text('Solicitud enviada'),
+        );
+      }
+      return const Text('Esta persona te envió una solicitud.');
+    }
+
+    return FilledButton.icon(
+      onPressed: _sending ? null : () => _sendRequest(currentUserId),
+      icon: _sending
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.person_add_outlined),
+      label: const Text('Enviar solicitud'),
     );
   }
 }
