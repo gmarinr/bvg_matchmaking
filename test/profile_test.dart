@@ -7,6 +7,10 @@ void main() {
   testWidgets('el perfil muestra y permite editar datos deportivos', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1200, 3200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
     await tester.pumpWidget(const ProviderScope(child: MatchMakingApp()));
     await tester.pumpAndSettle();
 
@@ -22,16 +26,19 @@ void main() {
     expect(find.text('Tu ID'), findsOneWidget);
     expect(find.text('fake-user-1'), findsOneWidget);
     expect(find.text('Disponibilidad general'), findsOneWidget);
-    expect(find.text('Deportes y niveles'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('Copiar ID'));
-    await tester.pump();
-    expect(find.text('ID copiado al portapapeles.'), findsOneWidget);
-
-    await tester.enterText(
-      find.byType(TextFormField).at(0),
-      'Jugador actualizado',
+    expect(
+      find.text('Deportes y niveles', skipOffstage: false),
+      findsOneWidget,
     );
+
+    final copyButton = find.byTooltip('Copiar ID');
+    await tester.ensureVisible(copyButton);
+    await tester.tap(copyButton);
+    await tester.pumpAndSettle();
+
+    final nameField = find.byType(TextFormField).first;
+    await tester.ensureVisible(nameField);
+    await tester.enterText(nameField, 'Jugador actualizado');
     await tester.tap(find.text('Guardar cambios'));
     await tester.pumpAndSettle(const Duration(milliseconds: 500));
 

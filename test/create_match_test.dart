@@ -66,11 +66,20 @@ void main() {
       await tester.tap(find.widgetWithText(ChoiceChip, 'Fútbol'));
       await tester.pump();
 
-      // Orden de los TextField: título, descripción, comuna, lugar.
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'Fútbol de prueba');
-      await tester.enterText(fields.at(2), 'Ñuñoa');
-      await tester.enterText(fields.at(3), 'Estadio Nacional');
+      final communeField = find.byKey(const ValueKey('commune-selector-input'));
+      await tester.enterText(communeField, 'Nu');
+      await tester.pump();
+      await tester.tap(find.text('Ñuñoa').last);
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('match-title-input')),
+        'Fútbol de prueba',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('match-location-input')),
+        'Estadio Nacional',
+      );
       await tester.pump();
 
       // Calendario -> OK, luego selector de hora -> OK (valores iniciales).

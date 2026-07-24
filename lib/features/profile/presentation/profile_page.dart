@@ -6,6 +6,8 @@ import '../../../core/domain/enums.dart';
 import '../../../core/domain/sport.dart';
 import '../../../core/errors/failures.dart';
 import '../../auth/data/auth_providers.dart';
+import '../../communes/data/commune_providers.dart';
+import '../../communes/presentation/commune_selector.dart';
 import '../data/profile_providers.dart';
 import '../domain/profile.dart';
 
@@ -60,7 +62,7 @@ class ProfileForm extends ConsumerStatefulWidget {
 class _ProfileFormState extends ConsumerState<ProfileForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _displayName;
-  late final TextEditingController _commune;
+  String? _communeCode;
   late final TextEditingController _availability;
   late final Map<String, SkillLevel> _selectedSports;
   bool _loading = false;
@@ -71,7 +73,7 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
     _displayName = TextEditingController(
       text: widget.profile?.displayName ?? '',
     );
-    _commune = TextEditingController(text: widget.profile?.commune ?? '');
+    _communeCode = widget.profile?.communeCode;
     _availability = TextEditingController(
       text: widget.profile?.generalAvailability ?? '',
     );
@@ -83,7 +85,6 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
   @override
   void dispose() {
     _displayName.dispose();
-    _commune.dispose();
     _availability.dispose();
     super.dispose();
   }
@@ -95,13 +96,24 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
       return;
     }
 
+    final commune = ref
+        .read(communesProvider)
+        .valueOrNull
+        ?.where((item) => item.code == _communeCode)
+        .firstOrNull;
+    if (commune == null) {
+      _showMessage('Selecciona una comuna válida del catálogo.');
+      return;
+    }
+
     setState(() => _loading = true);
     final now = DateTime.now();
     final current = widget.profile;
     final profile = Profile(
       id: widget.userId,
       displayName: _displayName.text.trim(),
-      commune: _commune.text.trim(),
+      commune: commune.name,
+      communeCode: commune.code,
       createdAt: current?.createdAt ?? now,
       updatedAt: now,
       avatarUrl: current?.avatarUrl,
@@ -177,10 +189,7 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Tu ID',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  Text('Tu ID', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -219,14 +228,9 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
             validator: _requiredValidator('Completa tu nombre.'),
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _commune,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Comuna',
-              prefixIcon: Icon(Icons.location_on_outlined),
-            ),
-            validator: _requiredValidator('Completa tu comuna.'),
+          CommuneSelector(
+            value: _communeCode,
+            onChanged: (value) => setState(() => _communeCode = value),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -270,8 +274,10 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
           for (final sport in widget.sports)
             if (_selectedSports.containsKey(sport.id)) ...[
               DropdownButtonFormField<SkillLevel>(
-                value: _selectedSports[sport.id],
-                decoration: InputDecoration(labelText: 'Nivel en ${sport.name}'),
+                initialValue: _selectedSports[sport.id],
+                decoration: InputDecoration(
+                  labelText: 'Nivel en ${sport.name}',
+                ),
                 items: [
                   for (final level in SkillLevel.values)
                     DropdownMenuItem(
@@ -307,15 +313,15 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
 }
 
 String? Function(String?) _requiredValidator(String message) => (value) {
-      if ((value ?? '').trim().isEmpty) return message;
-      return null;
-    };
+  if ((value ?? '').trim().isEmpty) return message;
+  return null;
+};
 
 String _skillLabel(SkillLevel level) => switch (level) {
-      SkillLevel.beginner => 'Principiante',
-      SkillLevel.intermediate => 'Intermedio',
-      SkillLevel.advanced => 'Avanzado',
-    };
+  SkillLevel.beginner => 'Principiante',
+  SkillLevel.intermediate => 'Intermedio',
+  SkillLevel.advanced => 'Avanzado',
+};
 
 String _errorMessage(Object error) {
   if (error is Failure) return error.message;

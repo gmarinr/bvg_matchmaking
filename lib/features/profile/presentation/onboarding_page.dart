@@ -7,6 +7,8 @@ import '../../../core/domain/enums.dart';
 import '../../../core/domain/sport.dart';
 import '../../../core/errors/failures.dart';
 import '../../auth/data/auth_providers.dart';
+import '../../communes/data/commune_providers.dart';
+import '../../communes/presentation/commune_selector.dart';
 import '../data/profile_providers.dart';
 import '../domain/profile.dart';
 
@@ -22,7 +24,7 @@ class OnboardingPage extends ConsumerStatefulWidget {
 class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _formKey = GlobalKey<FormState>();
   final _displayName = TextEditingController();
-  final _commune = TextEditingController();
+  String? _communeCode;
   final _availability = TextEditingController();
   final Map<String, SkillLevel> _selectedSports = {};
 
@@ -41,7 +43,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   @override
   void dispose() {
     _displayName.dispose();
-    _commune.dispose();
     _availability.dispose();
     super.dispose();
   }
@@ -65,7 +66,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       _profile = profile;
       _sports = sports;
       _displayName.text = profile?.displayName ?? '';
-      _commune.text = profile?.commune ?? '';
+      _communeCode = profile?.communeCode;
       _availability.text = profile?.generalAvailability ?? '';
       _selectedSports
         ..clear()
@@ -92,6 +93,16 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final user = ref.read(currentAppUserProvider);
     if (user == null) return;
 
+    final commune = ref
+        .read(communesProvider)
+        .valueOrNull
+        ?.where((item) => item.code == _communeCode)
+        .firstOrNull;
+    if (commune == null) {
+      setState(() => _error = 'Selecciona una comuna válida del catálogo.');
+      return;
+    }
+
     setState(() {
       _saving = true;
       _error = null;
@@ -104,7 +115,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         Profile(
           id: user.id,
           displayName: _displayName.text.trim(),
-          commune: _commune.text.trim(),
+          commune: commune.name,
+          communeCode: commune.code,
           createdAt: _profile?.createdAt ?? now,
           updatedAt: now,
           avatarUrl: _profile?.avatarUrl,
@@ -181,14 +193,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 validator: _requiredValidator('Ingresa tu nombre'),
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _commune,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Comuna',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                ),
-                validator: _requiredValidator('Ingresa tu comuna'),
+              CommuneSelector(
+                value: _communeCode,
+                onChanged: (value) => setState(() {
+                  _communeCode = value;
+                  _error = null;
+                }),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -239,7 +249,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               for (final sport in sports)
                 if (_selectedSports.containsKey(sport.id)) ...[
                   DropdownButtonFormField<SkillLevel>(
-                    value: _selectedSports[sport.id],
+                    initialValue: _selectedSports[sport.id],
                     decoration: InputDecoration(
                       labelText: 'Nivel en ${sport.name}',
                     ),
@@ -285,15 +295,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 }
 
 String? Function(String?) _requiredValidator(String message) => (value) {
-      if ((value ?? '').trim().isEmpty) return message;
-      return null;
-    };
+  if ((value ?? '').trim().isEmpty) return message;
+  return null;
+};
 
 String _skillLabel(SkillLevel level) => switch (level) {
-      SkillLevel.beginner => 'Principiante',
-      SkillLevel.intermediate => 'Intermedio',
-      SkillLevel.advanced => 'Avanzado',
-    };
+  SkillLevel.beginner => 'Principiante',
+  SkillLevel.intermediate => 'Intermedio',
+  SkillLevel.advanced => 'Avanzado',
+};
 
 String _errorMessage(Object error) {
   if (error is Failure) return error.message;

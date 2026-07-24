@@ -5,6 +5,7 @@ import '../../../../core/domain/enums.dart';
 import '../../../../core/utils/app_date.dart';
 import '../../../../core/utils/labels.dart';
 import '../providers/matches_list_providers.dart';
+import '../../../communes/presentation/commune_selector.dart';
 
 /// Hoja de filtros avanzados: comuna, nivel y fecha desde.
 /// El deporte se filtra con los chips de la lista.
@@ -23,7 +24,7 @@ class MatchesFilterSheet extends ConsumerStatefulWidget {
 }
 
 class _MatchesFilterSheetState extends ConsumerState<MatchesFilterSheet> {
-  late final TextEditingController _commune;
+  String? _communeCode;
   SkillLevel? _skill;
   DateTime? _fromDate;
 
@@ -31,20 +32,19 @@ class _MatchesFilterSheetState extends ConsumerState<MatchesFilterSheet> {
   void initState() {
     super.initState();
     final filter = ref.read(matchFilterProvider);
-    _commune = TextEditingController(text: filter.commune ?? '');
+    _communeCode = filter.commune;
     _skill = filter.skillLevel;
     _fromDate = filter.fromDate;
   }
 
   @override
   void dispose() {
-    _commune.dispose();
     super.dispose();
   }
 
   void _apply() {
     final notifier = ref.read(matchFilterProvider.notifier);
-    notifier.setCommune(_commune.text.trim());
+    notifier.setCommune(_communeCode);
     notifier.setSkill(SkillLevelFilter(_skill));
     notifier.setFromDate(_fromDate);
     Navigator.of(context).pop();
@@ -52,7 +52,7 @@ class _MatchesFilterSheetState extends ConsumerState<MatchesFilterSheet> {
 
   void _clear() {
     setState(() {
-      _commune.clear();
+      _communeCode = null;
       _skill = null;
       _fromDate = null;
     });
@@ -87,15 +87,9 @@ class _MatchesFilterSheetState extends ConsumerState<MatchesFilterSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('Comuna', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _commune,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              hintText: 'Ej: Ñuñoa',
-              prefixIcon: Icon(Icons.place_outlined),
-            ),
+          CommuneSelector(
+            value: _communeCode,
+            onChanged: (value) => setState(() => _communeCode = value),
           ),
           const SizedBox(height: 20),
           Text('Nivel', style: theme.textTheme.labelLarge),

@@ -4,6 +4,7 @@ class Profile {
     required this.id,
     required this.displayName,
     required this.commune,
+    this.communeCode,
     required this.createdAt,
     required this.updatedAt,
     this.avatarUrl,
@@ -13,6 +14,7 @@ class Profile {
   final String id;
   final String displayName;
   final String commune;
+  final String? communeCode;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? avatarUrl;
@@ -21,6 +23,7 @@ class Profile {
   Profile copyWith({
     String? displayName,
     String? commune,
+    String? communeCode,
     String? avatarUrl,
     String? generalAvailability,
     DateTime? updatedAt,
@@ -28,6 +31,7 @@ class Profile {
     id: id,
     displayName: displayName ?? this.displayName,
     commune: commune ?? this.commune,
+    communeCode: communeCode ?? this.communeCode,
     createdAt: createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     avatarUrl: avatarUrl ?? this.avatarUrl,
@@ -38,6 +42,7 @@ class Profile {
     id: json['id'] as String,
     displayName: json['display_name'] as String,
     commune: json['commune'] as String,
+    communeCode: json['commune_code'] as String?,
     createdAt: DateTime.parse(json['created_at'] as String),
     updatedAt: DateTime.parse(json['updated_at'] as String),
     avatarUrl: json['avatar_url'] as String?,
@@ -48,6 +53,7 @@ class Profile {
     'id': id,
     'display_name': displayName,
     'commune': commune,
+    'commune_code': communeCode,
     'created_at': createdAt.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
     'avatar_url': avatarUrl,

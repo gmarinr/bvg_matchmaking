@@ -32,6 +32,7 @@ class SupabaseProfileRepository implements ProfileRepository {
         'id': profile.id,
         'display_name': profile.displayName,
         'commune': profile.commune,
+        'commune_code': profile.communeCode,
         'avatar_url': profile.avatarUrl,
         'general_availability': profile.generalAvailability,
       };

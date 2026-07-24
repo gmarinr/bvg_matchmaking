@@ -9,6 +9,7 @@ class Match {
     required this.title,
     required this.startAt,
     required this.commune,
+    this.communeCode,
     required this.locationText,
     required this.skillLevel,
     required this.minParticipants,
@@ -28,6 +29,7 @@ class Match {
   final String? description;
   final DateTime startAt;
   final String commune;
+  final String? communeCode;
   final String locationText;
   final SkillLevel skillLevel;
   final int minParticipants;
@@ -50,6 +52,7 @@ class Match {
     String? description,
     DateTime? startAt,
     String? commune,
+    String? communeCode,
     String? locationText,
     SkillLevel? skillLevel,
     int? minParticipants,
@@ -65,6 +68,7 @@ class Match {
     description: description ?? this.description,
     startAt: startAt ?? this.startAt,
     commune: commune ?? this.commune,
+    communeCode: communeCode ?? this.communeCode,
     locationText: locationText ?? this.locationText,
     skillLevel: skillLevel ?? this.skillLevel,
     minParticipants: minParticipants ?? this.minParticipants,
@@ -84,6 +88,7 @@ class Match {
     description: json['description'] as String?,
     startAt: DateTime.parse(json['start_at'] as String),
     commune: json['commune'] as String,
+    communeCode: json['commune_code'] as String?,
     locationText: json['location_text'] as String,
     skillLevel: SkillLevel.fromWire(json['skill_level'] as String),
     minParticipants: json['min_participants'] as int,
@@ -105,6 +110,7 @@ class Match {
     'description': description,
     'start_at': startAt.toIso8601String(),
     'commune': commune,
+    'commune_code': communeCode,
     'location_text': locationText,
     'skill_level': skillLevel.wire,
     'min_participants': minParticipants,

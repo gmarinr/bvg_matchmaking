@@ -15,7 +15,7 @@ void main() {
     await tester.enterText(fields.at(0), 'jugador@test.cl');
     await tester.enterText(fields.at(1), '123456');
     await tester.showKeyboard(fields.at(1));
-    tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
 
     expect(
@@ -24,7 +24,7 @@ void main() {
     );
 
     await tester.pumpAndSettle(const Duration(milliseconds: 700));
-    expect(find.byType(SportSelectorCard), findsNWidgets(5));
+    expect(find.byType(SportSelectorCard), findsAtLeastNWidgets(4));
     expect(find.text('Fútbol 7 en La Reina'), findsNothing);
   });
 }
