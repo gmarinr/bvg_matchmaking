@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/enums.dart';
@@ -148,6 +149,11 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _copyUserId() async {
+    await Clipboard.setData(ClipboardData(text: widget.userId));
+    if (mounted) _showMessage('ID copiado al portapapeles.');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -163,6 +169,44 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
           Text(
             'Esta información se usará para que otras personas conozcan tu perfil.',
             style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 24),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tu ID de usuario',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SelectableText(
+                          widget.userId,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Copiar ID',
+                        icon: const Icon(Icons.copy_outlined),
+                        onPressed: _copyUserId,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    'Compártelo solo con personas de confianza.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           TextFormField(

@@ -16,6 +16,7 @@ import '../features/profile/data/profile_providers.dart';
 import '../features/profile/domain/profile.dart';
 import '../features/profile/domain/profile_repository.dart';
 import '../features/profile/presentation/onboarding_page.dart';
+import '../features/users/presentation/user_search_page.dart';
 
 /// Rutas nombradas de la app.
 class AppRoutes {
@@ -24,6 +25,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String onboarding = '/onboarding';
+  static const String userSearch = '/users/search';
   static const String home = '/home';
   static const String createMatch = '/matches/new';
 
@@ -75,6 +77,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.userSearch,
+        builder: (context, state) => const UserSearchPage(),
       ),
       GoRoute(
         path: AppRoutes.home,

@@ -19,8 +19,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Tu perfil deportivo'), findsOneWidget);
+    expect(find.text('Tu ID de usuario'), findsOneWidget);
+    expect(find.text('fake-user-1'), findsOneWidget);
     expect(find.text('Disponibilidad general'), findsOneWidget);
     expect(find.text('Deportes y niveles'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Copiar ID'));
+    await tester.pump();
+    expect(find.text('ID copiado al portapapeles.'), findsOneWidget);
 
     await tester.enterText(
       find.byType(TextFormField).at(0),

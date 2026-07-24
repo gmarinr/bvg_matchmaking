@@ -7,6 +7,7 @@ import '../../auth/data/auth_providers.dart';
 import '../../matches/presentation/matches_list_page.dart';
 import '../../matches/presentation/my_participations_page.dart';
 import '../../profile/presentation/profile_page.dart';
+import '../../users/presentation/user_search_page.dart';
 
 /// Contenedor principal tras iniciar sesión.
 class HomePage extends ConsumerStatefulWidget {
@@ -17,9 +18,14 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  int _index = 0;
+  int _index = 1;
 
-  static const _titles = ['Partidos', 'Mis participaciones', 'Perfil'];
+  static const _titles = [
+    'Buscar',
+    'Partidos',
+    'Mis participaciones',
+    'Perfil',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +41,15 @@ class _HomePageState extends ConsumerState<HomePage> {
         ],
       ),
       body: switch (_index) {
-        0 => MatchesListPage(
+        0 => const UserSearchPage(embedded: true),
+        1 => MatchesListPage(
           onOpenMatch: (match) =>
               context.push(AppRoutes.matchDetailPath(match.id)),
         ),
-        1 => const MyParticipationsPage(),
+        2 => const MyParticipationsPage(),
         _ => const ProfilePage(),
       },
-      floatingActionButton: _index == 0
+      floatingActionButton: _index == 1
           ? FloatingActionButton.extended(
               onPressed: () => context.push(AppRoutes.createMatch),
               icon: const Icon(Icons.add),
@@ -54,9 +61,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
+            icon: Text('🔎', style: TextStyle(fontSize: 22)),
+            selectedIcon: Text('🔎', style: TextStyle(fontSize: 22)),
             label: 'Buscar',
+          ),
+          NavigationDestination(
+            icon: Text('🏟️', style: TextStyle(fontSize: 22)),
+            selectedIcon: Text('🏟️', style: TextStyle(fontSize: 22)),
+            label: 'Partidos',
           ),
           NavigationDestination(
             icon: Icon(Icons.event_available_outlined),
