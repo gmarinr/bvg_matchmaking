@@ -41,6 +41,10 @@ Failure mapSupabaseError(Object error) {
         return const ValidationFailure(
           'El deporte o partido seleccionado ya no existe.',
         );
+      case '23514':
+        return const ValidationFailure(
+          'Selecciona una comuna válida del catálogo.',
+        );
       case 'P0001':
         return const ValidationFailure(
           'La operación no cumple una regla del partido.',

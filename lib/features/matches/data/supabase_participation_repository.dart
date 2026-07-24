@@ -79,7 +79,9 @@ class SupabaseParticipationRepository implements ParticipationRepository {
                         : ParticipationStatus.rejected)
                     .wire,
           })
-          .eq('id', participationId);
+          .eq('id', participationId)
+          .select('id')
+          .single();
     } catch (error) {
       throw mapSupabaseError(error);
     }
@@ -94,7 +96,9 @@ class SupabaseParticipationRepository implements ParticipationRepository {
       await _client
           .from('match_participations')
           .update({'attendance_status': status.wire})
-          .eq('id', participationId);
+          .eq('id', participationId)
+          .select('id')
+          .single();
     } catch (error) {
       throw mapSupabaseError(error);
     }
@@ -106,7 +110,9 @@ class SupabaseParticipationRepository implements ParticipationRepository {
       await _client
           .from('match_participations')
           .update({'participation_status': ParticipationStatus.cancelled.wire})
-          .eq('id', participationId);
+          .eq('id', participationId)
+          .select('id')
+          .single();
     } catch (error) {
       throw mapSupabaseError(error);
     }

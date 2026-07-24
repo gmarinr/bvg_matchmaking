@@ -53,6 +53,14 @@ Las migraciones se encuentran en:
 
 `supabase/migrations/20260723010000_revoke_public_helper_execute.sql`
 
+`supabase/migrations/20260724000000_add_communes_catalog.sql`
+
+`supabase/migrations/20260725000000_complete_communes_catalog.sql`
+
+`supabase/migrations/20260726000000_harden_commune_integrity.sql`
+
+`supabase/migrations/20260727000000_revoke_commune_helper_execute.sql`
+
 Incluye:
 
 - perfiles, deportes, deportes por usuario, partidos y participaciones;
@@ -61,6 +69,7 @@ Incluye:
 - restricciones de integridad y unicidad;
 - triggers para crear la participación del organizador y sincronizar cupos;
 - políticas RLS para autenticación, perfiles, partidos y participaciones.
+- catálogo de comunas con códigos canónicos y validación de integridad.
 
 La migración inicial y los ajustes de seguridad ya fueron aplicados al proyecto
 Supabase configurado mediante MCP. En otro proyecto deben aplicarse en orden
