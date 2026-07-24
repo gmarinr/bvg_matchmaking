@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/enums.dart';
+import '../../../core/errors/failures.dart';
 import '../../../core/utils/app_date.dart';
 import '../../../core/utils/labels.dart';
 import '../../auth/data/auth_providers.dart';
@@ -125,12 +126,17 @@ class _CreateMatchPageState extends ConsumerState<CreateMatchPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Partido publicado.')));
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No pudimos publicar el partido.')),
-        );
+        // Mostramos el motivo real (p. ej. permiso RLS o error de Postgres) en
+        // vez de un genérico, para poder diagnosticar fallos del backend.
+        final message = e is Failure
+            ? e.message
+            : 'No pudimos publicar el partido.';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }
