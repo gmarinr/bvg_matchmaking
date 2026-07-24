@@ -1,3 +1,4 @@
+import '../../../core/domain/enums.dart';
 import '../../../core/domain/sport.dart';
 import '../domain/profile.dart';
 import '../domain/profile_repository.dart';
@@ -5,7 +6,13 @@ import '../domain/profile_repository.dart';
 /// Implementación en memoria del perfil y el catálogo de deportes.
 class FakeProfileRepository implements ProfileRepository {
   final Map<String, Profile> _profiles = {..._seedProfiles};
-  final List<UserSport> _userSports = [];
+  final List<UserSport> _userSports = [
+    const UserSport(
+      userId: 'fake-user-1',
+      sportId: 'futbol',
+      skillLevel: SkillLevel.intermediate,
+    ),
+  ];
 
   static final DateTime _seedDate = DateTime(2026, 7, 1);
 
@@ -15,6 +22,7 @@ class FakeProfileRepository implements ProfileRepository {
     commune: commune,
     createdAt: _seedDate,
     updatedAt: _seedDate,
+    generalAvailability: id == 'fake-user-1' ? 'Tardes y fines de semana' : null,
   );
 
   /// Perfiles de los usuarios que aparecen en los datos semilla, para que la

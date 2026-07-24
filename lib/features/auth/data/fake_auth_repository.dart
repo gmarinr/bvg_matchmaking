@@ -25,7 +25,9 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<void> signUp({required String email, required String password}) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
-    _current = AppUser(id: 'fake-user-1', email: email);
+    // Las cuentas nuevas deben pasar por onboarding; el usuario semilla se
+    // reserva para los flujos existentes que comienzan con login.
+    _current = AppUser(id: 'fake-new-user', email: email);
     _controller.add(_current);
   }
 

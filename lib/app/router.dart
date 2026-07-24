@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/domain/sport.dart';
 import '../features/auth/data/auth_providers.dart';
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/register_page.dart';
@@ -11,6 +12,10 @@ import '../features/home/presentation/home_page.dart';
 import '../features/matches/presentation/create_match_page.dart';
 import '../features/matches/presentation/manage_requests_page.dart';
 import '../features/matches/presentation/match_detail_page.dart';
+import '../features/profile/data/profile_providers.dart';
+import '../features/profile/domain/profile.dart';
+import '../features/profile/domain/profile_repository.dart';
+import '../features/profile/presentation/onboarding_page.dart';
 
 /// Rutas nombradas de la app.
 class AppRoutes {
@@ -18,6 +23,7 @@ class AppRoutes {
 
   static const String login = '/login';
   static const String register = '/register';
+  static const String onboarding = '/onboarding';
   static const String home = '/home';
   static const String createMatch = '/matches/new';
 
@@ -37,17 +43,24 @@ class AppRoutes {
 /// con sesión, login/registro redirigen a home.
 final routerProvider = Provider<GoRouter>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
+  final profileRepo = ref.watch(profileRepositoryProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.home,
     refreshListenable: GoRouterRefreshStream(authRepo.authStateChanges()),
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final loggedIn = authRepo.currentUser != null;
       final loc = state.matchedLocation;
       final atAuthScreen = loc == AppRoutes.login || loc == AppRoutes.register;
+      final atOnboarding = loc == AppRoutes.onboarding;
 
       if (!loggedIn) return atAuthScreen ? null : AppRoutes.login;
-      if (atAuthScreen) return AppRoutes.home;
+      final complete = await _isProfileComplete(
+        profileRepo,
+        authRepo.currentUser!.id,
+      );
+      if (!complete) return atOnboarding ? null : AppRoutes.onboarding;
+      if (atAuthScreen || atOnboarding) return AppRoutes.home;
       return null;
     },
     routes: [
@@ -58,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingPage(),
       ),
       GoRoute(
         path: AppRoutes.home,
@@ -80,6 +97,25 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+Future<bool> _isProfileComplete(
+  ProfileRepository repository,
+  String userId,
+) async {
+  final results = await Future.wait([
+    repository.getProfile(userId),
+    repository.getUserSports(userId),
+  ]);
+  final profile = results[0] as Profile?;
+  if (profile == null ||
+      profile.displayName.trim().isEmpty ||
+      profile.commune.trim().isEmpty ||
+      (profile.generalAvailability ?? '').trim().isEmpty) {
+    return false;
+  }
+
+  return (results[1] as List<UserSport>).isNotEmpty;
+}
 
 /// Adapta un [Stream] a [Listenable] para que go_router reevalúe el guard
 /// cada vez que cambia la sesión.
